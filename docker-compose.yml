@@ -1,0 +1,82 @@
+# SOULDAWN — локальная разработка
+# Запуск: docker compose up -d
+# Перед запуском: скопируй web/.env.local.example → web/.env.local
+#                         bot/.env.example → bot/.env
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       souldawn
+      POSTGRES_USER:     souldawn
+      POSTGRES_PASSWORD: souldawn_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U souldawn"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Next.js (web) ────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./web/.env.local
+    environment:
+      DATABASE_URL: postgresql://souldawn:souldawn_dev@postgres:5432/souldawn
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+
+  # ── Основной бот ────────────────────────────────────────────────────────────────
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./bot/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://souldawn:souldawn_dev@postgres:5432/souldawn
+      SITE_URL: http://web:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+  # ── Support bot ───────────────────────────────────────────────────────────────
+  support-bot:
+    build:
+      context: ./souldawn-support-bot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./souldawn-support-bot/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://souldawn:souldawn_dev@postgres:5432/souldawn
+      SITE_URL: http://web:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
