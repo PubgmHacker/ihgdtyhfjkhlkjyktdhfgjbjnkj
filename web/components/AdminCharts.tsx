@@ -68,7 +68,7 @@ export default function AdminCharts({ stats }: { stats: ChartStats }) {
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="Выручка" fill="#c8a45e" />
-            <Bar dataKey="Расходы" fill="#8B2500" />
+            <Bar dataKey="Расходы" fill="#A86A3D" />
             <Bar dataKey="Прибыль" fill="#4caf50" />
           </BarChart>
         </ResponsiveContainer>

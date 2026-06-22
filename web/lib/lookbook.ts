@@ -42,7 +42,7 @@ export const LOOKS: Look[] = [
     subtitle: "Лонгслив × Джоггеры",
     story:
       "Когда город засыпает — мы тренируемся. Лёгкий, дышащий слой для ночных сессий и поздних выходов. Тишина, фокус, движение.",
-    accent: "#8B2500",
+    accent: "#D4915C",
     gradient: "from-[#10141a] via-surface to-[#0a0a0a]",
     items: [
       { name: "STATIC", category: "T-Shirts", price: 4490 },
