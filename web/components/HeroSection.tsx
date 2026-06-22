@@ -3,31 +3,38 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { staggerContainer, charReveal, fadeUp, EASE } from "@/lib/motion";
+import dynamic from "next/dynamic";
+
+// Загружаем шейдер только на клиенте (нет SSR) — WebGL недоступен на сервере
+const DawnShader = dynamic(() => import("./DawnShader"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const WORD_SOUL = "SOUL".split("");
 const WORD_DAWN = "DAWN".split("");
 
-/**
- * SOULDAWN — Hero.
- * Строгий тёмный фон, без WebGL/неона/параллакса (производительность + бренд).
- * Анимация — только дешёвый stagger-reveal текста на старте.
- */
 export default function HeroSection() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      {/* Строгий статичный фон: лёгкий тёплый акцент снизу, без анимации */}
+
+      {/* GLSL шейдер — анимированный рассветный туман */}
+      <DawnShader />
+
+      {/* CSS-фоллбэк поверх шейдера (виден если WebGL недоступен) */}
       <div
         aria-hidden
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background:
             "radial-gradient(120% 90% at 50% 110%, rgba(232,184,122,0.16) 0%, rgba(168,106,61,0.06) 35%, transparent 65%), linear-gradient(180deg, #08080A 0%, #0C0C0F 60%, #08080A 100%)",
         }}
       />
+
       {/* Тонкая верхняя линия-затемнение для глубины */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent"
+        className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent pointer-events-none"
       />
 
       {/* Content */}
