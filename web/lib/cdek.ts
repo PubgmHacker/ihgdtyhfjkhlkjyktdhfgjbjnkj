@@ -40,6 +40,7 @@ async function getToken(): Promise<string | null> {
   try {
     const res = await fetch(`${CDEK_API_URL}/oauth/token?parameters`, {
       method: "POST",
+      signal: AbortSignal.timeout(5000),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "client_credentials",
@@ -100,6 +101,7 @@ export async function calcDelivery(params: DeliveryParams): Promise<DeliveryQuot
   try {
     const res = await fetch(`${CDEK_API_URL}/calculator/tariff`, {
       method: "POST",
+      signal: AbortSignal.timeout(5000),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
