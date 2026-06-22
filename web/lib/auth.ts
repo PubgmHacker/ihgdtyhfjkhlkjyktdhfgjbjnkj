@@ -3,21 +3,32 @@ import bcrypt from "bcryptjs";
 
 // JWT_SECRET обязателен в production: дефолтный секрет позволяет подделать токен
 // (включая role=owner) и обойти всю админку. В dev допускаем явный fallback.
-const JWT_SECRET = (() => {
+//
+// ВАЖНО: проверка ́ленивая (при первом использовании), а не на этапе импорта,
+// чтобы `next build` (NODE_ENV=production, но без рантайм-секретов) не падал в CI.
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
+let cachedSecret: string | null = null;
+function getSecret(): string {
+  if (cachedSecret) return cachedSecret;
   const secret = process.env.JWT_SECRET;
+  const isProd = process.env.NODE_ENV === "production";
+
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "JWT_SECRET is required in production. Set a strong random value."
-      );
+    if (isProd && !isBuildPhase()) {
+      throw new Error("JWT_SECRET is required in production. Set a strong random value.");
     }
-    return "souldawn_jwt_secret_dev_only";
+    cachedSecret = "souldawn_jwt_secret_dev_only";
+    return cachedSecret;
   }
-  if (process.env.NODE_ENV === "production" && secret.length < 32) {
+  if (isProd && !isBuildPhase() && secret.length < 32) {
     throw new Error("JWT_SECRET must be at least 32 characters in production.");
   }
-  return secret;
-})();
+  cachedSecret = secret;
+  return cachedSecret;
+}
 const JWT_EXPIRES_IN = "24h";
 const REFRESH_EXPIRES_IN = "7d";
 
