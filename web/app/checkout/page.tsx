@@ -175,9 +175,9 @@ export default function CheckoutPage() {
         qty: i.quantity,
       }));
 
-      if (delivery === "cdek" && !city.trim() && !postalCode.trim()) {
+      if (delivery === "cdek" && !pvz) {
         setStep("form");
-        setError("Укажи город или индекс для расчёта СДЭК");
+        setError("Выбери пункт выдачи СДЭК на карте");
         return;
       }
 
@@ -192,7 +192,9 @@ export default function CheckoutPage() {
             email,
             city,
             region: city,
-            postal_code: postalCode || undefined,
+            postal_code: pvz?.postalCode || postalCode || undefined,
+            pvz_code: pvz?.code || undefined,
+            pvz_address: pvz?.fullAddress || pvz?.address || undefined,
           },
           payment_method: paymentMethod,
           promo_code: promoApplied?.code || undefined,
