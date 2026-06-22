@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import ScrollReveal from "@/components/ScrollReveal";
+import CdekMap, { type CdekPoint } from "@/components/CdekMap";
 
 const PROCESSING_STEPS = [
   "Проверяем наличие",
@@ -25,6 +26,8 @@ export default function CheckoutPage() {
   const [delivery, setDelivery] = useState<"cdek" | "courier">("cdek");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  // Выбранный пункт выдачи СДЭК (с карты).
+  const [pvz, setPvz] = useState<CdekPoint | null>(null);
   const [deliveryCost, setDeliveryCost] = useState(0); // копейки
   const [deliveryDays, setDeliveryDays] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [deliveryLoading, setDeliveryLoading] = useState(false);
