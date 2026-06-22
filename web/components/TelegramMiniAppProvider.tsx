@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+/**
+ * SOULDAWN — TelegramMiniAppProvider.
+ *
+ * Фикс race condition: авто-логин запускается один раз после WebApp.ready()
+ * и только если пользователь ещё не авторизован. Флаг attempted
+ * гарантирует однократность попытки даже при перерендерах контекста.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
@@ -10,30 +17,19 @@ declare global {
       WebApp?: {
         initData: string;
         initDataUnsafe: any;
-        user?: any;
-        onEvent: (eventType: string, callback: () => void) => void;
-        offEvent: (eventType: string, callback: () => void) => void;
         ready: () => void;
         close: () => void;
-        showPopup: (params: any) => void;
         showAlert: (message: string, callback?: () => void) => void;
+        setHeaderColor: (color: string) => void;
+        setBackgroundColor: (color: string) => void;
         hapticFeedback: {
           impactOccurred: (style: string) => void;
           notificationOccurred: (type: string) => void;
           selectionChanged: () => void;
         };
-        setHeaderColor: (color: string) => void;
-        setBackgroundColor: (color: string) => void;
         MainButton: {
-          text: string;
-          color: string;
-          textColor: string;
-          isActive: boolean;
-          isVisible: boolean;
           show: () => void;
           hide: () => void;
-          enable: () => void;
-          disable: () => void;
           setText: (text: string) => void;
           onClick: (callback: () => void) => void;
           offClick: (callback: () => void) => void;
@@ -49,64 +45,64 @@ export function TelegramMiniAppProvider({
   children: React.ReactNode;
 }) {
   const [isReady, setIsReady] = useState(false);
-  const [isMiniApp, setIsMiniApp] = useState(false);
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
+  // Флаг: авто-логин уже попытались — не повторяем
+  const attempted = useRef(false);
 
   const authenticateMiniApp = useCallback(
     async (initData: string) => {
+      if (attempted.current) return;
+      attempted.current = true;
+
       try {
-        const response = await fetch("/api/auth/mini-app", {
+        const res = await fetch("/api/auth/mini-app", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ initData }),
         });
-
-        const data = await response.json();
-
+        const data = await res.json();
         if (data.success && data.user) {
-          // Сессия живёт в httpOnly-куке (sd_access_token), не в localStorage.
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 500);
+          // Обновляем состояние авторизации в контексте
+          await refreshUser?.();
+          setTimeout(() => router.push("/dashboard"), 300);
         } else {
-          console.error("Mini App auth failed:", data.error);
-          window.Telegram?.WebApp?.showAlert("Ошибка авторизации");
+          console.warn("[MiniApp] auth failed:", data.error);
         }
-      } catch (error) {
-        console.error("Mini App auth error:", error);
-        window.Telegram?.WebApp?.showAlert("Ошибка подключения");
+      } catch (err) {
+        console.error("[MiniApp] auth error:", err);
       }
     },
-    [router]
+    [router, refreshUser]
   );
 
   useEffect(() => {
-    // Initialize Telegram Web App
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
+    if (typeof window === "undefined") return;
+    const tg = window.Telegram?.WebApp;
 
-      // Set theme colors matching our brand
-      tg.setHeaderColor("#0a0a0a");
-      tg.setBackgroundColor("#0a0a0a");
-
-      setIsMiniApp(true);
+    if (!tg) {
+      // Не миниапп — просто отображаем детей
       setIsReady(true);
-
-      // Auto-authenticate if initData exists
-      if (tg.initData && !user && !loading) {
-        authenticateMiniApp(tg.initData);
-      }
-    } else {
-      setIsReady(true);
+      return;
     }
-  }, [user, loading, authenticateMiniApp]);
+
+    // Инициализируем WebApp
+    tg.ready();
+    tg.setHeaderColor("#08080A");
+    tg.setBackgroundColor("#08080A");
+    setIsReady(true);
+
+    // Авто-логин: только если не авторизован и не в состоянии загрузки
+    if (!loading && !user && tg.initData) {
+      authenticateMiniApp(tg.initData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]); // запускаем один раз после разрешения loading
 
   if (!isReady) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-bg">
         <div className="animate-spin w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full" />
       </div>
     );
@@ -147,11 +143,5 @@ export function useTelegramWebApp() {
     }
   };
 
-  return {
-    isMiniApp,
-    showAlert,
-    hapticFeedback,
-    close,
-    tg: window.Telegram?.WebApp,
-  };
+  return { isMiniApp, showAlert, hapticFeedback, close };
 }
