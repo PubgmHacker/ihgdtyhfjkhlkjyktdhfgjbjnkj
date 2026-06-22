@@ -54,16 +54,16 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 
 export function signAccessToken(payload: Omit<JWTPayload, "iat" | "exp">): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function signRefreshToken(payload: Omit<JWTPayload, "iat" | "exp">): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+  return jwt.sign(payload, getSecret(), { expiresIn: REFRESH_EXPIRES_IN });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    return jwt.verify(token, getSecret()) as JWTPayload;
   } catch {
     return null;
   }
@@ -79,14 +79,14 @@ export interface EmailVerifyPayload {
 export function signEmailVerifyToken(userId: string, email: string): string {
   return jwt.sign(
     { userId, email, purpose: "verify_email" } satisfies EmailVerifyPayload,
-    JWT_SECRET,
+    getSecret(),
     { expiresIn: "24h" }
   );
 }
 
 export function verifyEmailToken(token: string): EmailVerifyPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as EmailVerifyPayload;
+    const decoded = jwt.verify(token, getSecret()) as EmailVerifyPayload;
     if (decoded.purpose !== "verify_email" || !decoded.userId || !decoded.email) {
       return null;
     }
