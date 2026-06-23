@@ -1,3 +1,4 @@
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 """SOULDAWN — All keyboard builders."""
 from __future__ import annotations
 
@@ -151,3 +152,27 @@ def _stats_main_kb() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="🟢 Онлайн", callback_data="stats:online"),
          InlineKeyboardButton(text="📋 Расходы", callback_data="stats:expenses")],
     ])
+
+
+# ======================== ВОССТАНОВЛЕННЫЙ БЛОК FAQ ========================
+FAQ_ITEMS = {
+    "delivery": "📦 Доставка",
+    "returns": "🔄 Возврат",
+    "sizes": "📐 Размеры",
+    "payment": "💳 Оплата",
+    "quality": "💎 Качество",
+    "contact": "📱 Контакты"
+}
+
+def faq_menu_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for key, text in FAQ_ITEMS.items():
+        builder.row(InlineKeyboardButton(text=text, callback_data=f"faq:{key}"))
+    builder.row(InlineKeyboardButton(text="← Назад", callback_data="back_to_menu"))
+    return builder.as_markup()
+
+def faq_article_kb(current_key: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="← К списку FAQ", callback_data="menu:faq"))
+    builder.row(InlineKeyboardButton(text="🏠 В главное меню", callback_data="back_to_menu"))
+    return builder.as_markup()
