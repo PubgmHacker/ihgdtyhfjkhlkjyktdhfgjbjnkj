@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const strId = String(telegramId);
     const numId = Number(telegramId);
 
-    // Безопасный поиск по всем возможным типам полей
+    // Ищем пользователя по строке или числу, полностью исключая падение BigInt
     let user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -24,13 +24,13 @@ export async function POST(req: Request) {
       },
     });
 
+    // Если пользователя нет, регистрируем его по вашей точной схеме (поля fullName, email, isActive)
     if (!user) {
       user = await prisma.user.create({
         data: {
           telegramId: BigInt(telegramId),
           fullName: "Посетитель Сайта",
-          email: "web_user_" + Math.random().toString(36).substr(2, 5) + "@souldawn.internal",
-          role: "USER",
+          email: "web_" + Math.random().toString(36).substr(2, 5) + "@souldawn.net",
           isActive: true
         } as any,
       }).catch(async () => {
@@ -38,17 +38,15 @@ export async function POST(req: Request) {
           data: {
             telegram_id: numId,
             name: "Посетитель Сайта",
-            username: "web_user",
-            created_at: new Date()
+            username: "web_user"
           } as any,
         });
       });
     }
 
     const ticketModel = (prisma as any).support_tickets || (prisma as any).supportTicket;
-    if (!ticketModel) return NextResponse.json({ error: "Support ticket model not found" }, { status: 500 });
-
     const generatedId = "ticket_" + Math.random().toString(36).substr(2, 9);
+    
     const ticket = await ticketModel.create({
       data: {
         id: generatedId,
@@ -56,31 +54,18 @@ export async function POST(req: Request) {
         userId: user.id,
         category: category || "general",
         message: message,
-        status: "open",
-        created_at: new Date(),
-        createdAt: new Date(),
+        status: "open"
       } as any,
-    }).catch(async () => {
-      return await ticketModel.create({
-        data: {
-          user_id: user.id,
-          userId: user.id,
-          category: category || "general",
-          message: message,
-          status: "open",
-          created_at: new Date(),
-          createdAt: new Date(),
-        } as any,
-      });
     });
 
     const logModel = (prisma as any).action_logs || (prisma as any).actionLog;
     if (logModel && ticket) {
       await logModel.create({
-        data: { ticket_id: ticket.id, ticketId: ticket.id, sender: "user", message: message, created_at: new Date(), createdAt: new Date() } as any,
+        data: { ticket_id: ticket.id, ticketId: ticket.id, sender: "user", message: message } as any,
       }).catch(() => {});
     }
 
+    // Рассылка операторам в ТГ
     const botToken = process.env.BOT_TOKEN;
     const rawSupportIds = process.env.SUPPORT_CHAT_ID || "8340654471";
     const supportChatIds = rawSupportIds.split(",").map(id => id.trim());
@@ -99,6 +84,6 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, ticketId: ticket ? ticket.id.toString() : "error" });
+    return NextResponse.json({ success: true, ticketId: ticket.id });
   } catch (error: any) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
