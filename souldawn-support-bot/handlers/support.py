@@ -19,19 +19,20 @@ logger = logging.getLogger("SOULDAWN.support")
 class ReplyStates(StatesGroup):
     waiting_for_reply_text = State()
 
+# Динамически подтягиваем домен из настроек Railway
 RAW_URL = os.getenv("MINIAPP_URL", "https://railway.app")
-API_BASE = RAW_URL.rstrip("/") + "/api/tickets"
+BASE_URL = RAW_URL.rstrip("/") + "/"
+API_BASE = BASE_URL + "api/tickets"
 
-# ── /start РАЗДЕЛЕНИЕ РОЛЕЙ ──
 @router.message(CommandStart())
 async def cmd_start_support(message: Message):
     user_id = message.from_user.id
-    if user_id in SUPPORT_CHAT_IDS or user_id in getattr(message.bot, "admin_ids", ADMIN_IDS):
+    if user_id in SUPPORT_CHAT_IDS or user_id in ADMIN_IDS:
         admin_text = (
             "🖥️ <b>Добро пожаловать в Админ-Панель оператора SOULDAWN!</b>\n\n"
             "Вы авторизованы как менеджер службы поддержки. Обращения клиентов с сайта и из бота будут прилетать вам в этот чат."
         )
-        admin_url = RAW_URL.rstrip("/") + "/admin"
+        admin_url = BASE_URL + "admin"
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="⚙️ Открыть Панель Ответов (Mini App)", web_app=WebAppInfo(url=admin_url))],
             [InlineKeyboardButton(text="🛠️ Запустить Дебаг-Меню для тестов", callback_data="admin:debug_menu")]
@@ -48,7 +49,6 @@ async def cmd_start_support(message: Message):
     ])
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=kb)
 
-# ── ПОЛНОЕ ИСПРАВЛЕННОЕ ДЕБАГ-МЕНЮ (/debug И КНОПКА) ──
 @router.message(Command("debug"))
 @router.callback_query(F.data == "admin:debug_menu")
 async def call_debug_menu_click(event: Message | CallbackQuery):
@@ -65,17 +65,15 @@ async def call_debug_menu_click(event: Message | CallbackQuery):
     else:
         await message.answer(debug_text, parse_mode="HTML", reply_markup=kb)
 
-# ── ИМИТАЦИЯ ОБРАЩЕНИЯ С САЙТА ──
 @router.callback_query(F.data == "debug:simulate_web")
 async def simulate_web_ticket(callback: CallbackQuery):
     fake_id = str(random.randint(100000, 999999))
     async with aiohttp.ClientSession() as session:
         payload = {"telegramId": "8340654471", "category": "order", "message": "Тестовый запрос с сайта #" + fake_id}
-        await session.post(RAW_URL.rstrip("/") + "/api/tickets/create", json=payload)
+        await session.post(BASE_URL + "api/tickets/create", json=payload)
     await callback.message.answer("✅ Имитация обращения с сайта выполнена через API!", parse_mode="HTML")
     await callback.answer()
 
-# ── ИМИТАЦИЯ ОБРАЩЕНИЯ С ТГ-БОТА ──
 @router.callback_query(F.data == "debug:simulate_tg")
 async def simulate_tg_ticket(callback: CallbackQuery):
     fake_id = str(random.randint(100000, 999999))
@@ -86,7 +84,6 @@ async def simulate_tg_ticket(callback: CallbackQuery):
     await callback.message.answer(notification_text, parse_mode="HTML", reply_markup=kb)
     await callback.answer()
 
-# ── ПРОВЕРКА СТАТУСА БАЗЫ ДАННЫХ ──
 @router.callback_query(F.data == "debug:test_db")
 async def test_db_connection(callback: CallbackQuery):
     async with aiohttp.ClientSession() as session:
@@ -95,7 +92,6 @@ async def test_db_connection(callback: CallbackQuery):
             await callback.message.answer("🔄 <b>Статус подключения к бэкенду БД:</b> " + status, parse_mode="HTML")
     await callback.answer()
 
-# ── ОБРАБОТКА ИНЛАЙН-КНОПКИ "ОТВЕТИТЬ ПОЛЬЗОВАТЕЛЮ" ──
 @router.callback_query(F.data.startswith("ticket:reply:"))
 async def handle_operator_reply_click(callback: CallbackQuery, state: FSMContext):
     ticket_id = callback.data.split(":")[-1]
@@ -113,12 +109,10 @@ async def process_operator_reply_text(message: Message, state: FSMContext):
 
     async with aiohttp.ClientSession() as session:
         payload = {"ticketId": ticket_id, "sender": "operator", "text": text}
-        await session.post(RAW_URL.rstrip("/") + "/api/tickets/messages", json=payload)
-        await session.post(RAW_URL.rstrip("/") + "/api/admin/tickets/" + str(ticket_id) + "/reply", json={"reply": text})
-
+        await session.post(BASE_URL + "api/tickets/messages", json=payload)
+        await session.post(BASE_URL + "api/admin/tickets/" + str(ticket_id) + "/reply", json={"reply": text})
     await message.answer("✅ <b>Ответ успешно отправлен и заархивирован везде!</b>", parse_mode="HTML")
 
-# ── ОБРАБОТКА ОБЫЧНЫХ СООБЩЕНИЙ КЛИЕНТОВ (МТС-СТАЙЛ) ──
 @router.message(F.text & ~F.text.startswith("/"))
 async def handle_support_message(message: Message, bot: Bot):
     tg_id = str(message.from_user.id)
