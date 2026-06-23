@@ -1,6 +1,8 @@
 /** @type {next.NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  // Включаем standalone режим для успешной сборки Docker-контейнера на Railway
+  output: "standalone",
   images: {
     unoptimized: true,
   },
