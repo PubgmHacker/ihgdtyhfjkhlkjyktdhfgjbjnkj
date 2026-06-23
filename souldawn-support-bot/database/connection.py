@@ -285,14 +285,18 @@ async def get_or_create_user(telegram_id: int, username: str = "", name: str = "
         # session.begin() commits automatically on clean exit
 
     if is_new and _bot:
-        from config import SUPPORT_CHAT_ID
+        from config import SUPPORT_CHAT_IDS
         try:
             uname_str = f"@{username}" if username else "no username"
-            await _bot.send_message(
-                SUPPORT_CHAT_ID,
-                f"New registration\n\nName: {name or '—'}\n"
-                f"Username: {uname_str}\nTelegram ID: {telegram_id}\nSource: Telegram",
-            )
+            for op_id in SUPPORT_CHAT_IDS:
+                try:
+                    await _bot.send_message(
+                        op_id,
+                        f"New registration\n\nName: {name or '—'}\n"
+                        f"Username: {uname_str}\nTelegram ID: {telegram_id}\nSource: Telegram",
+                    )
+                except Exception:
+                    pass
         except Exception:
             pass
     return user_dict

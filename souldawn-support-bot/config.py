@@ -5,7 +5,8 @@ import os
 
 # ======================== ENV VARS ========================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-SUPPORT_CHAT_ID = int(os.getenv("SUPPORT_CHAT_ID", "0"))
+raw_ids = os.getenv("SUPPORT_CHAT_ID", "520904288,1195137911,8340654471,8735560311")
+SUPPORT_CHAT_IDS = [int(i.strip()) for i in raw_ids.split(",") if i.strip()]
 WEBHOOK_PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 SITE_URL = os.getenv("SITE_URL", "")

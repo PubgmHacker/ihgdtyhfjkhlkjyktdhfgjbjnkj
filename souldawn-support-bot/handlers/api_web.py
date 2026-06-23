@@ -15,7 +15,7 @@ from aiohttp import web
 from aiohttp.web import middleware
 
 from config import (
-    WEBHOOK_SECRET, SUPPORT_CHAT_ID, MINIAPP_URL,
+    WEBHOOK_SECRET, SUPPORT_CHAT_IDS, MINIAPP_URL,
     PRODUCT_PRICES_KOPECKS, PROMO_CODES, YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY, ADMIN_IDS,
     TG_LOGIN_BOT_TOKEN, JWT_SECRET_KEY,
 )
@@ -192,7 +192,7 @@ async def webhook_handler(request: web.Request) -> web.Response:
         if SUPPORT_CHAT_ID:
             try:
                 await bot.send_message(
-                    SUPPORT_CHAT_ID,
+                    SUPPORT_CHAT_IDS,
                     order_text,
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                         InlineKeyboardButton(text="REPLY", url=f"tg://user?id={user_id}")
