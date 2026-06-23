@@ -48,8 +48,13 @@ async def init_db() -> None:
     try:
         # -- Step 1: Create engine --
         _log("--> Step 1: Creating SQLAlchemy engine...")
+        url = DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         engine = create_async_engine(
-            DATABASE_URL,
+            url,
             pool_size=5,
             max_overflow=10,
             pool_pre_ping=True,

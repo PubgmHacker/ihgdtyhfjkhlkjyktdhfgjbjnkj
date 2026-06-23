@@ -272,7 +272,9 @@ async def handle_broadcast_content(message: Message, state: FSMContext, bot: Bot
     sent_fail = 0
     deactivated = 0
 
-    for i, uid in enumerate(user_ids):
+    for i, raw_user in enumerate(user_ids):
+        uid = raw_user.get("telegram_id", raw_user.get("id", raw_user)) if isinstance(raw_user, dict) else raw_user
+        await asyncio.sleep(0.05)
         try:
             await message.copy_to(chat_id=uid)
             sent_ok += 1
