@@ -7,24 +7,14 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   try {
     const { email, password, name } = await req.json();
+    if (!email || !password) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
-    }
+    const existingUser = await prisma.user.findFirst({ where: { email: email.toLowerCase() } });
+    if (existingUser) return NextResponse.json({ error: "User exists" }, { status: 400 });
 
-    // Проверяем, существует ли пользователь
-    const existingUser = await prisma.user.findFirst({
-      where: { email: email.toLowerCase() },
-    });
-
-    if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
-    }
-
-    // Хешируем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Создаем пользователя и НАМЕРТВО выставляем флаги подтверждения в true, убирая вечную загрузку ЛК
+    // Автоматически подтверждаем все флаги верификации почты при создании аккаунта
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
@@ -40,11 +30,6 @@ export async function POST(req: Request) {
       } as any,
     });
 
-    return NextResponse.json({
-      success: true,
-      user: { id: user.id.toString(), email: user.email, name: user.name }
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    return NextResponse.json({ success: true, user: { id: user.id.toString(), email: user.email } });
+  } catch (error: any) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
