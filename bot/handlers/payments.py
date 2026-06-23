@@ -245,15 +245,45 @@ async def handle_webapp(message: Message, state: FSMContext, bot: Bot):
         return
 
     items = order.get("items", [])
-    total_rub = order.get("total", 0)
     contact = order.get("contact", {})
     payment_method = order.get("payment", "card")
+    promo_code = str(order.get("promo", order.get("promo_code", "")) or "").strip().upper()
 
     if not items:
         await message.answer("Empty order", reply_markup=main_kb())
         return
 
-    total_kopecks = int(total_rub) * 100
+    # БЕЗОПАСНОСТЬ: сумма НЕ берётся из клиента (miniapp можно подменить).
+    # Пересчитываем по серверному каталогу PRODUCT_PRICES_KOPECKS.
+    subtotal_kopecks = 0
+    for it in items:
+        pid = str(it.get("id", "")).strip()
+        try:
+            qty = int(it.get("qty", it.get("quantity", 1)))
+        except (TypeError, ValueError):
+            qty = 0
+        if qty <= 0:
+            await message.answer("Invalid quantity", reply_markup=main_kb())
+            return
+        unit = PRODUCT_PRICES_KOPECKS.get(pid)
+        if unit is None:
+            logger.warning(f"handle_webapp: unknown product id '{pid}' from user {user.id}")
+            await message.answer("Товар недоступен или снят с продажи", reply_markup=main_kb())
+            return
+        subtotal_kopecks += unit * qty
+        # Фиксируем серверную цену в позиции заказа.
+        it["price"] = unit
+        it["qty"] = qty
+
+    if subtotal_kopecks <= 0:
+        await message.answer("Empty order", reply_markup=main_kb())
+        return
+
+    # Серверное применение промокода.
+    total_kopecks = subtotal_kopecks
+    if promo_code and promo_code in PROMO_CODES:
+        pct = PROMO_CODES[promo_code]
+        total_kopecks = subtotal_kopecks - (subtotal_kopecks * pct) // 100
 
     items_summary = ", ".join([it.get("name", "?") for it in items[:3]])
     if len(items) > 3:
