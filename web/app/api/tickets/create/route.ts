@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     // 5. КРИТИЧЕСКИЙ ШАГ: Отправляем уведомление операторам в Telegram через токен Саппорт-Бота
     const botToken = process.env.BOT_TOKEN;
     const rawSupportIds = process.env.SUPPORT_CHAT_ID || "520904288,1195137911,8340654471,8735560311";
-    const supportChatIds = rawSupportIds.split(",").map(id => id.strip ? id.strip() : id);
+    const supportChatIds = rawSupportIds.split(",").map(id => id.trim());
 
     if (botToken) {
       const text = `❓ <b>Новое обращение с САЙТА!</b>\n\n<b>Категория:</b> ${category}\n<b>Текст:</b> ${message}\n\n🤖 <i>ИИ-Агент уже анализирует запрос...</i>`;
