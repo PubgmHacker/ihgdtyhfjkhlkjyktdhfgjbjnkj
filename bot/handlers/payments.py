@@ -23,6 +23,7 @@ from database import (
     get_or_create_user, save_user_cart, save_order,
     get_user_cart, get_full_stats,
     get_paid_unnotified_orders, mark_order_processing,
+    get_products_by_ids,
 )
 from utils import BANNERS, _fmt_price
 from texts import welcome, sent_fail, offline, pay_pending_text, pay_confirmed_text
@@ -254,10 +255,15 @@ async def handle_webapp(message: Message, state: FSMContext, bot: Bot):
         return
 
     # БЕЗОПАСНОСТЬ: сумма НЕ берётся из клиента (miniapp можно подменить).
-    # Пересчитываем по серверному каталогу PRODUCT_PRICES_KOPECKS.
-    subtotal_kopecks = 0
+    # ЕДИНЫЙ КАТАЛОГ: цены и остатки читаются из БД по uuid (та же таблица products,
+    # что у web). Так склад корректно спишется web-webhook'ом по id позиций.
+    # Агрегируем кол-во по id (защита от обхода проверки остатка дубликатами).
+    qty_by_id: dict[str, int] = {}
     for it in items:
         pid = str(it.get("id", "")).strip()
+        if not pid:
+            await message.answer("Некорректный товар в заказе", reply_markup=main_kb())
+            return
         try:
             qty = int(it.get("qty", it.get("quantity", 1)))
         except (TypeError, ValueError):
@@ -265,13 +271,39 @@ async def handle_webapp(message: Message, state: FSMContext, bot: Bot):
         if qty <= 0:
             await message.answer("Invalid quantity", reply_markup=main_kb())
             return
-        unit = PRODUCT_PRICES_KOPECKS.get(pid)
-        if unit is None:
-            logger.warning(f"handle_webapp: unknown product id '{pid}' from user {user.id}")
-            await message.answer("Товар недоступен или снят с продажи", reply_markup=main_kb())
-            return
+        qty_by_id[pid] = qty_by_id.get(pid, 0) + qty
+
+    catalog = await get_products_by_ids(list(qty_by_id.keys()))
+
+    # Fallback на статичный slug-каталог, если БД недоступна (без проверки остатка).
+    use_fallback = not catalog
+
+    subtotal_kopecks = 0
+    for it in items:
+        pid = str(it.get("id", "")).strip()
+        qty = qty_by_id[pid]
+        if use_fallback:
+            unit = PRODUCT_PRICES_KOPECKS.get(pid)
+            if unit is None:
+                logger.warning(f"handle_webapp: unknown product id '{pid}' from user {user.id}")
+                await message.answer("Товар недоступен или снят с продажи", reply_markup=main_kb())
+                return
+        else:
+            product = catalog.get(pid)
+            if product is None:
+                logger.warning(f"handle_webapp: unknown product id '{pid}' from user {user.id}")
+                await message.answer("Товар недоступен или снят с продажи", reply_markup=main_kb())
+                return
+            # Проверка остатка по суммарному кол-ву товара.
+            if product["stock"] <= 0 or qty_by_id[pid] > product["stock"]:
+                await message.answer(
+                    f"Товара «{product['name']}» недостаточно на складе",
+                    reply_markup=main_kb(),
+                )
+                return
+            unit = product["price_kopecks"]
         subtotal_kopecks += unit * qty
-        # Фиксируем серверную цену в позиции заказа.
+        # Фиксируем серверную цену/кол-во в позиции заказа.
         it["price"] = unit
         it["qty"] = qty
 
