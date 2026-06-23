@@ -12,8 +12,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Telegram ID required" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { telegram_id: BigInt(telegramId) },
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { telegram_id: BigInt(telegramId) } as any,
+          { telegramId: BigInt(telegramId) } as any,
+          { telegramId: String(telegramId) } as any
+        ]
+      },
     });
 
     if (!user) {
@@ -22,17 +28,17 @@ export async function GET(req: Request) {
 
     // Забираем все запросы этого пользователя
     const tickets = await prisma.support_tickets.findMany({
-      where: { user_id: user.id },
-      orderBy: { created_at: "desc" },
+      where: { user_id: user.id } as any,
+      orderBy: { created_at: "desc" } as any,
     });
 
-    // Безопасно конвертируем BigInt/Date в JSON-совместимый формат
-    const formattedTickets = tickets.map((t) => ({
+    // Форматируем в валидный JSON
+    const formattedTickets = tickets.map((t: any) => ({
       id: t.id.toString(),
       category: t.category,
       message: t.message,
       status: t.status,
-      createdAt: t.created_at,
+      createdAt: t.created_at || t.createdAt,
     }));
 
     return NextResponse.json({ tickets: formattedTickets });
