@@ -143,7 +143,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* ── Left: Image ── */}
-          <div className={`relative aspect-[3/4] md:aspect-auto bg-gradient-to-br ${product.gradient} flex items-center justify-center`}>
+          <div className={`relative aspect-[3/4] md:aspect-[3/4] bg-gradient-to-br ${product.gradient} flex items-center justify-center`}>
             {product.image ? (
               <>
                 {/* Skeleton */}
@@ -153,7 +153,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
+                  className="object-contain p-4"
                   priority
                 />
               </>

@@ -95,7 +95,7 @@ export function TelegramMiniAppProvider({
 
     // Авто-логин: только если не авторизован и не в состоянии загрузки
     if (!loading && !user && tg.initData) {
-      authenticateMiniApp(tg.initData);
+      // authenticateMiniApp(tg.initData); // отключено — в Mini App используем TG user напрямую
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]); // запускаем один раз после разрешения loading
