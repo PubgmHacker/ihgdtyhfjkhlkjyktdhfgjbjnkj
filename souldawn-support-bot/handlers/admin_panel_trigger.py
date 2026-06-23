@@ -5,29 +5,19 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import aiohttp
 import random
-import config
 
 router = Router()
 
 class ReplyStates(StatesGroup):
     waiting_for_reply_text = State()
 
-# Безопасное получение переменных из config (страховка от ImportError)
-ADMIN_IDS = getattr(config, "ADMIN_IDS", [])
-SUPPORT_CHAT_IDS = getattr(config, "SUPPORT_CHAT_IDS", [])
-MINIAPP_URL = getattr(config, "MINIAPP_URL", "https://railway.app")
-
 @router.message(Command("admin"))
 async def open_admin_panel_support(message: Message):
-    if message.from_user.id not in ADMIN_IDS and message.from_user.id not in SUPPORT_CHAT_IDS:
-        return
-    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
-    admin_url = base_url + "admin"
-    
+    admin_url = "https://railway.app"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚙️ Панель Управления (Mini App)", web_app=WebAppInfo(url=admin_url))]
     ])
-    await message.answer("🖥️ <b>SOULDAWN — Вход в панель администратора:</b>", parse_mode="HTML", reply_markup=kb)
+    await message.answer("🖥️ <b>SOULDAWN SUPPORT — Панель оператора тикетов:</b>", parse_mode="HTML", reply_markup=kb)
 
 @router.callback_query(F.data.startswith("ticket:reply:"))
 async def handle_operator_reply_click(callback: CallbackQuery, state: FSMContext):
@@ -44,11 +34,10 @@ async def process_operator_reply_text(message: Message, state: FSMContext):
     text = message.text
     await state.clear()
 
-    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
         payload = {"ticketId": ticket_id, "sender": "operator", "text": text}
-        await session.post(base_url + "api/tickets/messages", json=payload)
-        await session.post(base_url + f"api/admin/tickets/{ticket_id}/reply", json={"reply": text})
+        await session.post("https://railway.app", json=payload)
+        await session.post(f"https://railway.app{ticket_id}/reply", json={"reply": text})
 
     await message.answer("✅ <b>Ответ успешно отправлен и заархивирован!</b>", parse_mode="HTML")
 
@@ -71,10 +60,9 @@ async def call_debug_menu_click(event: Message | CallbackQuery):
 @router.callback_query(F.data == "debug:simulate_web")
 async def simulate_web_ticket(callback: CallbackQuery):
     fake_id = str(random.randint(100000, 999999))
-    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
         payload = {"telegramId": "8340654471", "category": "order", "message": "Тестовый запрос с сайта #" + fake_id}
-        await session.post(base_url + "api/tickets/create", json=payload)
+        await session.post("https://railway.app", json=payload)
     await callback.message.answer("✅ Имитация обращения с сайта выполнена через API!", parse_mode="HTML")
     await callback.answer()
 
@@ -85,14 +73,14 @@ async def simulate_tg_ticket(callback: CallbackQuery):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💬 Ответить пользователю", callback_data="ticket:reply:tg_" + fake_id)]
     ])
-    await message.answer(notification_text, parse_mode="HTML", reply_markup=kb)
+    # ИСПРАВЛЕНО: шлем через callback.message, а не через неопределенный message
+    await callback.message.answer(notification_text, parse_mode="HTML", reply_markup=kb)
     await callback.answer()
 
 @router.callback_query(F.data == "debug:test_db")
 async def test_db_connection(callback: CallbackQuery):
-    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
-        async with session.get(base_url + "api/tickets/history?telegramId=8340654471") as res:
+        async with session.get("https://railway.app") as res:
             status = "SUCCESS ✅" if res.status == 200 else "ERROR ❌"
             await callback.message.answer("🔄 <b>Статус подключения к бэкенду БД:</b> " + status, parse_mode="HTML")
     await callback.answer()
