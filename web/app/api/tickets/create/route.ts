@@ -11,7 +11,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // Ищем пользователя через универсальный findFirst, проверяя оба возможных варианта поля
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -26,14 +25,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Создаем тикет в базе данных (используем as any для обхода строгой типизации схем)
-    const ticket = await prisma.support_tickets.create({
+    // Универсальный динамический выбор модели (supportTicket или support_tickets)
+    const ticketModel = (prisma as any).support_tickets || (prisma as any).supportTicket;
+
+    if (!ticketModel) {
+      return NextResponse.json({ error: "Support ticket model not found in Prisma schema" }, { status: 500 });
+    }
+
+    const ticket = await ticketModel.create({
       data: {
         user_id: user.id,
+        userId: user.id, // На случай если в PrismaCamelCase
         category: category || "general",
         message: message,
         status: "open",
         created_at: new Date(),
+        createdAt: new Date(),
       } as any,
     });
 

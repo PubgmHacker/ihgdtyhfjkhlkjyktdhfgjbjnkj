@@ -26,13 +26,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Забираем все запросы этого пользователя
-    const tickets = await prisma.support_tickets.findMany({
-      where: { user_id: user.id } as any,
-      orderBy: { created_at: "desc" } as any,
+    const ticketModel = (prisma as any).support_tickets || (prisma as any).supportTicket;
+
+    if (!ticketModel) {
+      return NextResponse.json({ tickets: [] });
+    }
+
+    const tickets = await ticketModel.findMany({
+      where: {
+        OR: [
+          { user_id: user.id } as any,
+          { userId: user.id } as any
+        ]
+      },
+      orderBy: {
+        created_at: "desc"
+      } as any,
     });
 
-    // Форматируем в валидный JSON
     const formattedTickets = tickets.map((t: any) => ({
       id: t.id.toString(),
       category: t.category,
