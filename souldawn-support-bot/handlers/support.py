@@ -22,6 +22,7 @@ class ReplyStates(StatesGroup):
 
 RAW_URL = os.getenv("MINIAPP_URL", "https://railway.app")
 BASE_URL = RAW_URL.rstrip("/") + "/"
+API_BASE = BASE_URL + "api/tickets"
 
 @router.message(CommandStart())
 async def cmd_start_support(message: Message):
@@ -41,6 +42,15 @@ async def cmd_start_support(message: Message):
     welcome_text = "👋 <b>Добро пожаловать в службу поддержки SOULDAWN!</b>\n\nНапишите ваш вопрос прямо сюда."
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📱 Открыть окно поддержки", web_app=WebAppInfo(url=SUPPORT_MINIAPP_URL))]])
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=kb)
+
+# ── 🖥️ ИСПРАВЛЕННАЯ КОМАНДА /admin БЕЗ БЛОКИРОВОК ПО ID ──
+@router.message(Command("admin"))
+async def open_admin_panel_support(message: Message):
+    admin_url = BASE_URL + "admin"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚙️ Открыть Панель Ответов (Mini App)", web_app=WebAppInfo(url=admin_url))]
+    ])
+    await message.answer("🖥️ <b>SOULDAWN SUPPORT — Панель оператора тикетов:</b>", parse_mode="HTML", reply_markup=kb)
 
 # ── 🛠️ ДЕБАГ-МЕНЮ С ОБЩЕЙ ДИАГНОСТИКОЙ ──
 @router.message(Command("debug"))
@@ -69,7 +79,6 @@ async def run_full_system_scan(callback: CallbackQuery):
     
     connector = aiohttp.TCPConnector(ssl=False)
     async with aiohttp.ClientSession(connector=connector) as session:
-        # 1. Пинг контейнера Docker Next.js
         t0 = time.time()
         try:
             async with session.get(BASE_URL, timeout=3.0) as res:
@@ -78,7 +87,6 @@ async def run_full_system_scan(callback: CallbackQuery):
         except Exception as e:
             ping_status = f"🔴 OFFLINE / TIMEOUT | Ошибка: {type(e).__name__}"
 
-        # 2. Проверка History API на BigInt/Prisma
         try:
             async with session.get(BASE_URL + "api/tickets/history?telegramId=8340654471", timeout=3.0) as res:
                 res_text = await res.text()
@@ -89,7 +97,6 @@ async def run_full_system_scan(callback: CallbackQuery):
         except Exception as e:
             history_status = f"🚨 СБОЙ МАРШРУТА | Сетевой сброс: {type(e).__name__}"
 
-        # 3. Проверка Create API на UUID/Int генерацию колонок
         try:
             payload = {"telegramId": "8340654471", "category": "debug_scan", "message": "Автоматическая диагностика"}
             async with session.post(BASE_URL + "api/tickets/create", json=payload, timeout=3.0) as res:
@@ -101,7 +108,6 @@ async def run_full_system_scan(callback: CallbackQuery):
         except Exception as e:
             create_status = f"🚨 СБОЙ ЗАПИСИ | Исключение: {type(e).__name__}"
 
-    # Собираем красивую ультимативную карту диагностики
     report = (
         "📋 <b>ОТЧЁТ О ДИАГНОСТИКЕ СИСТЕМЫ SOULDAWN</b>\n"
         "====================================\n\n"
@@ -111,11 +117,9 @@ async def run_full_system_scan(callback: CallbackQuery):
         "====================================\n"
         "⚙️ <i>Рекомендация: Если статус красный, проверьте соответствие переменных MINIAPP_URL текущему домену Railway.</i>"
     )
-    
     await status_msg.edit_text(report, parse_mode="HTML")
     await callback.answer()
 
-# ── ОСТАЛЬНЫЕ ДЕБАГ-КНОПКИ ИМИТАЦИИ И ОТВЕТОВ ──
 @router.callback_query(F.data == "debug:simulate_web")
 async def simulate_web_ticket(callback: CallbackQuery):
     fake_id = str(random.randint(100000, 999999))
@@ -172,7 +176,23 @@ async def handle_support_message(message: Message, bot: Bot):
                 create_data = await create_res.json()
                 ticket_id = create_data.get("ticketId", "unknown")
     notification_text = f"❓ <b>Новое обращение в поддержку!</b>\n\n<b>Источник:</b> Telegram-Бот\n<b>ID тикета:</b> <code>{ticket_id}</code>\n\n<b>Текст:</b> <i>{text}</i>"
-    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="💬 Ответить пользователю", callback_data=f"ticket:reply:{ticket_id}")]])
+    kb = InlineKeyboardMarkup(inline_keyboard=[[[InlineKeyboardButton(text="💬 Ответить пользователю", callback_data=f"ticket:reply:{ticket_id}")]])
     for op_id in SUPPORT_CHAT_IDS:
-        try: await bot.send_message(chat_id=op_id, text=notification_text, parse_mode="HTML", reply_markup=kb)
-        except Exception: pass
+
+cat << 'EOF' > bot/handlers/admin_panel_trigger.py
+from aiogram import Router
+from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from aiogram.filters import Command
+import os
+
+router = Router()
+
+@router.message(Command("admin"))
+async def open_admin_panel(message: Message):
+    RAW_URL = os.getenv("MINIAPP_URL", "https://railway.app")
+    base_url = RAW_URL.rstrip("/") + "/"
+    admin_url = base_url + "admin"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚙️ Открыть панель управления", web_app=WebAppInfo(url=admin_url))]
+    ])
+    await message.answer("🖥️ <b>SOULDAWN — Вход в панель администратора:</b>", parse_mode="HTML", reply_markup=kb)
