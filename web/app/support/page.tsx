@@ -18,21 +18,25 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Ticket[]>([]);
 
-  // Извлекаем Telegram ID из Mini App WebApp context
   useEffect(() => {
     if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
       const webApp = (window as any).Telegram.WebApp;
       webApp.ready();
+      webApp.expand();
+      
+      // Янтарно-металлический темный фон для заголовка Telegram
+      webApp.setHeaderColor("#0e0e10");
+      webApp.setBackgroundColor("#0e0e10");
+
       const user = webApp.initDataUnsafe?.user;
       if (user?.id) {
         setTgId(user.id.toString());
       } else {
-        setTgId("8340654471"); // Тестовый ID из логов для локальной разработки
+        setTgId("8340654471");
       }
     }
   }, []);
 
-  // Загрузка истории обращений
   const loadHistory = async () => {
     if (!tgId) return;
     try {
@@ -40,7 +44,7 @@ export default function SupportPage() {
       const data = await res.json();
       if (data.tickets) setHistory(data.tickets);
     } catch (err) {
-      console.error("Ошибка загрузки истории тикетов:", err);
+      console.error("Ошибка загрузки истории:", err);
     }
   };
 
@@ -48,7 +52,6 @@ export default function SupportPage() {
     if (activeTab === "history") loadHistory();
   }, [activeTab, tgId]);
 
-  // Отправка нового тикета
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tgId || !message.trim()) return;
@@ -62,7 +65,6 @@ export default function SupportPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Запрос успешно отправлен операторам!");
         setMessage("");
         setActiveTab("history");
       } else {
@@ -76,93 +78,119 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 font-sans">
-      <h1 className="text-2xl font-bold text-center mb-6 uppercase tracking-wider text-red-500">
-        Служба поддержки SOULDAWN
-      </h1>
+    <div className="min-h-screen bg-[#0e0e10] text-zinc-300 p-4 font-mono selection:bg-amber-500 selection:text-black">
+      {/* Шапка: Теплый янтарь + Металл */}
+      <div className="text-center my-6 space-y-1">
+        <h1 className="text-3xl font-black tracking-wider text-zinc-100 uppercase italic">
+          SOUL<span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]">DAWN</span>
+        </h1>
+        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+          // AMBER_CORE_SUPPORT_INTERFACE
+        </p>
+      </div>
 
-      {/* Переключатель вкладок */}
-      <div className="flex border-b border-zinc-800 mb-6">
+      {/* Навигация (Вкладки из шлифованного металла и янтаря) */}
+      <div className="flex border border-zinc-800 bg-zinc-900/40 backdrop-blur mb-6 p-1 rounded-sm">
         <button
           onClick={() => setActiveTab("create")}
-          className={`flex-1 py-3 text-center font-medium ${
-            activeTab === "create" ? "text-red-500 border-b-2 border-red-500" : "text-zinc-500"
+          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none ${
+            activeTab === "create" 
+              ? "bg-amber-500 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          Создать запрос
+          [ Написать ]
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex-1 py-3 text-center font-medium ${
-            activeTab === "history" ? "text-red-500 border-b-2 border-red-500" : "text-zinc-500"
+          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none ${
+            activeTab === "history" 
+              ? "bg-amber-500 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          История ({history.length})
+          [ История ({history.length}) ]
         </button>
       </div>
 
-      {/* Вкладка: Создание запроса */}
+      {/* Контент: Создание тикета */}
       {activeTab === "create" && (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs uppercase text-zinc-400 mb-2 font-bold">Категория вопроса</label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+              // ТЕХНИЧЕСКАЯ КАТЕГОРИЯ
+            </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white focus:outline-none focus:border-red-500"
+              className="w-full bg-zinc-900/80 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all cursor-pointer rounded-sm"
             >
-              <option value="general">Общие вопросы</option>
-              <option value="order">Проблема с заказом</option>
-              <option value="delivery">Доставка и получение</option>
-              <option value="return">Возврат товара</option>
+              <option value="general">ОБЩИЕ ВОПРОСЫ</option>
+              <option value="order">ПРОБЛЕМА С ЗАКАЗОМ</option>
+              <option value="delivery">ДОСТАВКА И ЛОГИСТИКА</option>
+              <option value="return">ОБМЕН И ВОЗВРАТ</option>
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs uppercase text-zinc-400 mb-2 font-bold">Опишите вашу проблему</label>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+              // СУТЬ ОБРАЩЕНИЯ
+            </label>
             <textarea
               required
-              rows={5}
+              rows={6}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Введите текст обращения..."
-              className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white focus:outline-none focus:border-red-500 resize-none"
+              placeholder="Опишите вашу проблему максимально подробно..."
+              className="w-full bg-zinc-900/80 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-zinc-600 resize-none rounded-sm"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded transition-all uppercase tracking-wide disabled:opacity-50"
+            className="w-full bg-transparent border-2 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-black py-4 transition-all uppercase tracking-widest text-xs disabled:opacity-30 active:scale-[0.99] rounded-sm"
           >
-            {loading ? "Отправка..." : "Отправить обращение"}
+            {loading ? "⚡ СИНХРОНИЗАЦИЯ..." : "⚙️ ОТПРАВИТЬ ЗАПРОС"}
           </button>
         </form>
       )}
 
-      {/* Вкладка: История */}
+      {/* Контент: История обращений */}
       {activeTab === "history" && (
         <div className="space-y-4">
           {history.length === 0 ? (
-            <p className="text-center text-zinc-500 mt-8">У вас пока нет открытых или завершенных обращений.</p>
+            <div className="border border-dashed border-zinc-800 p-8 text-center text-zinc-600 text-xs uppercase tracking-wider">
+              История обращений пуста.
+            </div>
           ) : (
             history.map((ticket) => (
-              <div key={ticket.id} className="bg-zinc-900 border border-zinc-800 rounded p-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs uppercase bg-zinc-800 text-zinc-300 px-2 py-1 rounded">
-                    {ticket.category === "order" ? "📦 Заказ" : ticket.category === "return" ? "🔄 Возврат" : "💬 Общее"}
+              <div 
+                key={ticket.id} 
+                className="bg-zinc-900/40 border border-zinc-800 p-4 space-y-3 relative overflow-hidden rounded-sm border-l-4 border-l-zinc-600"
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 bg-zinc-900 px-2 py-0.5 border border-zinc-800">
+                    {ticket.category === "order" ? "📦 Заказ" : ticket.category === "return" ? "🔄 Возврат" : "💬 Вопрос"}
                   </span>
                   <span
-                    className={`text-xs font-bold uppercase px-2 py-1 rounded ${
-                      ticket.status === "open" ? "bg-amber-500/20 text-amber-400" : "bg-green-500/20 text-green-400"
+                    className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 border rounded-sm ${
+                      ticket.status === "open" 
+                        ? "bg-amber-950/40 text-amber-400 border-amber-500/20" 
+                        : "bg-zinc-900 text-zinc-500 border-zinc-800"
                     }`}
                   >
                     {ticket.status === "open" ? "В обработке" : "Решено"}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-200">{ticket.message}</p>
-                <div className="text-[10px] text-zinc-500">
-                  {new Date(ticket.createdAt).toLocaleString("ru-RU")}
+                
+                <p className="text-xs text-zinc-300 leading-relaxed break-words pr-2">
+                  {ticket.message}
+                </p>
+                
+                <div className="flex justify-between items-center text-[9px] text-zinc-600 uppercase pt-2 border-t border-zinc-800/40">
+                  <span>ID: #{ticket.id.slice(-6)}</span>
+                  <span>{new Date(ticket.createdAt).toLocaleString("ru-RU")}</span>
                 </div>
               </div>
             ))
