@@ -4,7 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python3 check_db.py && python3 bot.py",
+    "preDeployCommand": "python3 check_db.py",
+    "startCommand": "python3 bot.py",
     "numReplicas": 1
   }
 }
