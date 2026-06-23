@@ -103,7 +103,7 @@ async def on_faq_menu(callback: CallbackQuery):
     )
     await _edit(callback, "info", text, info_kb())
     await callback.answer()
-ы
+
 
 
 @router.callback_query(F.data == "menu:support")
