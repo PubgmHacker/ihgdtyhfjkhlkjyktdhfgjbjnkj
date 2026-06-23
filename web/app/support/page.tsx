@@ -88,7 +88,7 @@ export default function SupportPage() {
             <span className="text-xs font-black text-zinc-100 uppercase tracking-wide">{userProfile.first_name}</span>
             <span className="text-[10px] text-amber-500/80 font-bold">{userProfile.username ? `@${userProfile.username}` : `ID: ${userProfile.id}`}</span>
           </div>
-          <div className="ml-auto text-right"><span className="text-[8px] bg-zinc-800 text-zinc-500 border border-zinc-700/50 px-1.5 py-0.5 uppercase block">// TG_OK</span></div>
+          <div className="ml-auto text-right"><span className="text-[8px] bg-zinc-800 text-zinc-500 border border-zinc-700/50 px-1.5 py-0.5 uppercase block">// TG_AUTHORIZED</span></div>
         </div>
       )}
 

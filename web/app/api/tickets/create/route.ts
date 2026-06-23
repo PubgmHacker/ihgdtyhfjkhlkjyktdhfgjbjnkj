@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-// Глобальный патч для сериализации BigInt в JSON
-(BigInt.prototype as any).toJSON = function () {
-  return this.toString();
-};
-
+(BigInt.prototype as any).toJSON = function () { return this.toString(); };
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
@@ -13,20 +9,17 @@ export async function POST(req: Request) {
     const { telegramId, category, message } = await req.json();
     if (!telegramId || !message) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    // Преобразуем входящий ID во все возможные типы для безопасного поиска
-    const numId = Number(telegramId);
     const strId = String(telegramId);
-    let bigId = null;
-    try { bigId = BigInt(telegramId); } catch (_) {}
+    const numId = Number(telegramId);
 
+    // Безопасный поиск по всем возможным типам полей
     let user = await prisma.user.findFirst({
       where: {
         OR: [
           { telegram_id: numId } as any,
           { telegram_id: strId } as any,
           { telegramId: numId } as any,
-          { telegramId: strId } as any,
-          ...(bigId ? [{ telegram_id: bigId } as any, { telegramId: bigId } as any] : [])
+          { telegramId: strId } as any
         ]
       },
     });
@@ -34,22 +27,19 @@ export async function POST(req: Request) {
     if (!user) {
       user = await prisma.user.create({
         data: {
-          telegram_id: bigId || numId,
-          telegramId: bigId || numId,
-          username: "web_user",
-          name: "Посетитель Сайта",
-          created_at: new Date(),
-          createdAt: new Date()
+          telegramId: BigInt(telegramId),
+          fullName: "Посетитель Сайта",
+          email: "web_user_" + Math.random().toString(36).substr(2, 5) + "@souldawn.internal",
+          role: "USER",
+          isActive: true
         } as any,
       }).catch(async () => {
         return await prisma.user.create({
           data: {
-            telegram_id: strId,
-            telegramId: strId,
-            username: "web_user",
+            telegram_id: numId,
             name: "Посетитель Сайта",
-            created_at: new Date(),
-            createdAt: new Date()
+            username: "web_user",
+            created_at: new Date()
           } as any,
         });
       });
@@ -97,10 +87,7 @@ export async function POST(req: Request) {
 
     if (botToken && ticket) {
       const text = `❓ <b>Новое обращение с САЙТА!</b>\n\n<b>ID тикета:</b> <code>${ticket.id}</code>\n<b>Категория:</b> ${category}\n<b>Текст:</b> ${message}`;
-      const replyMarkup = {
-        inline_keyboard: [[{ text: "💬 Ответить пользователю", callback_data: `ticket:reply:${ticket.id}` }]]
-      };
-
+      const replyMarkup = { inline_keyboard: [[{ text: "💬 Ответить пользователю", callback_data: `ticket:reply:${ticket.id}` }]] };
       for (const adminId of supportChatIds) {
         try {
           await fetch(`https://telegram.org{botToken}/sendMessage`, {
@@ -108,7 +95,7 @@ export async function POST(req: Request) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ chat_id: adminId, text: text, parse_mode: "HTML", reply_markup: replyMarkup })
           });
-        } catch (e) { console.error(e); }
+        } catch (e) {}
       }
     }
 
