@@ -5,9 +5,16 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEBHOOK_PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 
-# Настройки базы данных и администраторов
-DATABASE_URL = os.getenv("DATABASE_URL", "")
+# Настройки администраторов
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
+
+# Настройки базы данных с автоподменой на asyncpg
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Безопасная обработка списка ID поддержки
 raw_ids = os.getenv("SUPPORT_CHAT_ID", "520904288,1195137911,8340654471,8735560311")
