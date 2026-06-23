@@ -205,8 +205,12 @@ async def cmd_notify(message: Message, bot: Bot):
         return
     user_ids = await get_all_users("drops")
     sent = 0
-    for uid in user_ids:
+    for user in user_ids:
+        # Если из БД пришел словарь, достаем из него telegram_id, иначе берем как число
+        uid = user.get("telegram_id", user.get("id", user)) if isinstance(user, dict) else user
         try:
+            # Защита от спам-фильтра Telegram (небольшая пауза)
+            await asyncio.sleep(0.05)
             await bot.send_message(uid, f"🔥 {text}")
             sent += 1
             await asyncio.sleep(0.3)
