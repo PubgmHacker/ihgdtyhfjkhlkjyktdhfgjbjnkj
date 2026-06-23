@@ -45,7 +45,7 @@ async def cmd_start_support(message: Message):
 
 @router.message(Command("admin"))
 async def open_admin_panel_support(message: Message):
-    admin_url = BASE_URL + "admin"
+    admin_url = BASE_URL + "admin?v=" + str(random.randint(1000, 9999))
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚙️ Открыть Панель Ответов (Mini App)", web_app=WebAppInfo(url=admin_url))]
     ])
