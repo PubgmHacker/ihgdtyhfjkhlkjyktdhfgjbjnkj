@@ -23,3 +23,5 @@ if DATABASE_URL:
 # Безопасная обработка списка ID поддержки
 raw_ids = os.getenv("SUPPORT_CHAT_ID", "520904288,1195137911,8340654471,8735560311")
 SUPPORT_CHAT_IDS = [int(i.strip()) for i in raw_ids.split(",") if i.strip()]
+
+SUPPORT_MINIAPP_URL = os.getenv("SUPPORT_MINIAPP_URL", "https://railway.app")

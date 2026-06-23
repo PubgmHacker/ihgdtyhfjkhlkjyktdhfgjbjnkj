@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from aiogram import Router, F, Bot
-from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from aiogram.filters import CommandStart
 from openai import AsyncOpenAI
 
@@ -32,11 +32,14 @@ async def cmd_start_support(message: Message):
     welcome_text = (
         "👋 <b>Добро пожаловать в службу поддержки SOULDAWN!</b>\n\n"
         "Напишите ваш вопрос прямо сюда, и наш ИИ-помощник моментально ответит вам.\n\n"
-        "Если ваш вопрос сложный или вы хотите пообщаться с человеком, просто нажмите кнопку ниже или напишите «Позови оператора»."
+        "Если ваш вопрос сложный или вы хотите пообщаться с человеком, просто откройте окно поддержки ниже или напишите свой вопрос в чат."
     )
     
+    from config import SUPPORT_MINIAPP_URL
+    
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💬 Позвать оператора", callback_data="ticket:call_operator")]
+        [InlineKeyboardButton(text="📱 Открыть окно поддержки", web_app=WebAppInfo(url=SUPPORT_MINIAPP_URL))],
+        [InlineKeyboardButton(text="💬 Позвать оператора в чат", callback_data="ticket:call_operator")]
     ])
     
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=kb)
