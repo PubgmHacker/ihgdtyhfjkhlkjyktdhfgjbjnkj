@@ -5,23 +5,29 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import aiohttp
 import random
-from config import ADMIN_IDS, SUPPORT_CHAT_IDS, MINIAPP_URL
+import config
 
 router = Router()
 
 class ReplyStates(StatesGroup):
     waiting_for_reply_text = State()
 
+# Безопасное получение переменных из config (страховка от ImportError)
+ADMIN_IDS = getattr(config, "ADMIN_IDS", [])
+SUPPORT_CHAT_IDS = getattr(config, "SUPPORT_CHAT_IDS", [])
+MINIAPP_URL = getattr(config, "MINIAPP_URL", "https://railway.app")
+
 @router.message(Command("admin"))
 async def open_admin_panel_support(message: Message):
-    # Используем проверенный базовый URL вашего Mini App из настроек Railway
+    if message.from_user.id not in ADMIN_IDS and message.from_user.id not in SUPPORT_CHAT_IDS:
+        return
     base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     admin_url = base_url + "admin"
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚙️ Панель Управления (Mini App)", web_app=WebAppInfo(url=admin_url))]
     ])
-    await message.answer("🖥️ <b>SOULDAWN SUPPORT — Панель оператора тикетов:</b>", parse_mode="HTML", reply_markup=kb)
+    await message.answer("🖥️ <b>SOULDAWN — Вход в панель администратора:</b>", parse_mode="HTML", reply_markup=kb)
 
 @router.callback_query(F.data.startswith("ticket:reply:"))
 async def handle_operator_reply_click(callback: CallbackQuery, state: FSMContext):
@@ -79,7 +85,7 @@ async def simulate_tg_ticket(callback: CallbackQuery):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💬 Ответить пользователю", callback_data="ticket:reply:tg_" + fake_id)]
     ])
-    await callback.message.answer(notification_text, parse_mode="HTML", reply_markup=kb)
+    await message.answer(notification_text, parse_mode="HTML", reply_markup=kb)
     await callback.answer()
 
 @router.callback_query(F.data == "debug:test_db")
