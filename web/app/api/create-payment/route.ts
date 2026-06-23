@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Серверный пересчёт: цены и остатки из БД ──────────────────────────
-    const productIds = [...new Set([...aggregated.values()].map((it) => it.id))];
+    const productIds = Array.from(new Set(Array.from(aggregated.values()).map((it) => it.id)));
     const products = await prisma.product.findMany({
       where: { id: { in: productIds }, isActive: true },
     });
