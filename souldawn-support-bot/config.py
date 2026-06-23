@@ -5,6 +5,10 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEBHOOK_PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 
+# Настройки ИИ-ассистента (OpenRouter / OpenAI)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "")
+
 # Настройки администраторов
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
 
