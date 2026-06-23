@@ -24,7 +24,6 @@ export default function SupportPage() {
       webApp.ready();
       webApp.expand();
       
-      // Янтарно-металлический темный фон для заголовка Telegram
       webApp.setHeaderColor("#0e0e10");
       webApp.setBackgroundColor("#0e0e10");
 
@@ -78,24 +77,27 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-zinc-300 p-4 font-mono selection:bg-amber-500 selection:text-black">
-      {/* Шапка: Теплый янтарь + Металл */}
+    /* fixed inset-0 и bg-[#0e0e10] полностью перекрывают основной сайт, каталог и меню */
+    <div className="fixed inset-0 z-[99999] bg-[#0e0e10] text-zinc-300 p-4 font-mono selection:bg-amber-500 selection:text-black overflow-y-auto">
+      
+      {/* Шапка интерфейса поддержки */}
       <div className="text-center my-6 space-y-1">
         <h1 className="text-3xl font-black tracking-wider text-zinc-100 uppercase italic">
           SOUL<span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]">DAWN</span>
         </h1>
         <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-          // AMBER_CORE_SUPPORT_INTERFACE
+          // AMBER_SUPPORT_TERMINAL_ISOLATED
         </p>
       </div>
 
-      {/* Навигация (Вкладки из шлифованного металла и янтаря) */}
+      {/* Переключатель разделов */}
       <div className="flex border border-zinc-800 bg-zinc-900/40 backdrop-blur mb-6 p-1 rounded-sm">
         <button
           onClick={() => setActiveTab("create")}
-          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none ${
+          type="button"
+          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none cursor-pointer ${
             activeTab === "create" 
-              ? "bg-amber-500 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+              ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
               : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -103,9 +105,10 @@ export default function SupportPage() {
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none ${
+          type="button"
+          className={`flex-1 py-3 text-center text-xs uppercase tracking-wider font-black transition-all border-none cursor-pointer ${
             activeTab === "history" 
-              ? "bg-amber-500 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+              ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
               : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -113,7 +116,7 @@ export default function SupportPage() {
         </button>
       </div>
 
-      {/* Контент: Создание тикета */}
+      {/* Форма создания тикета */}
       {activeTab === "create" && (
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
@@ -123,7 +126,7 @@ export default function SupportPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-zinc-900/80 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all cursor-pointer rounded-sm"
+              className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all cursor-pointer rounded-sm"
             >
               <option value="general">ОБЩИЕ ВОПРОСЫ</option>
               <option value="order">ПРОБЛЕМА С ЗАКАЗОМ</option>
@@ -142,21 +145,21 @@ export default function SupportPage() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Опишите вашу проблему максимально подробно..."
-              className="w-full bg-zinc-900/80 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-zinc-600 resize-none rounded-sm"
+              className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-zinc-600 resize-none rounded-sm"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-transparent border-2 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-black py-4 transition-all uppercase tracking-widest text-xs disabled:opacity-30 active:scale-[0.99] rounded-sm"
+            className="w-full bg-transparent border-2 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-black py-4 transition-all uppercase tracking-widest text-xs disabled:opacity-30 active:scale-[0.99] rounded-sm cursor-pointer"
           >
             {loading ? "⚡ СИНХРОНИЗАЦИЯ..." : "⚙️ ОТПРАВИТЬ ЗАПРОС"}
           </button>
         </form>
       )}
 
-      {/* Контент: История обращений */}
+      {/* История обращений */}
       {activeTab === "history" && (
         <div className="space-y-4">
           {history.length === 0 ? (
@@ -167,7 +170,7 @@ export default function SupportPage() {
             history.map((ticket) => (
               <div 
                 key={ticket.id} 
-                className="bg-zinc-900/40 border border-zinc-800 p-4 space-y-3 relative overflow-hidden rounded-sm border-l-4 border-l-zinc-600"
+                className="bg-zinc-900/60 border border-zinc-800 p-4 space-y-3 relative overflow-hidden rounded-sm border-l-4 border-l-zinc-500"
               >
                 <div className="flex justify-between items-start gap-4">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 bg-zinc-900 px-2 py-0.5 border border-zinc-800">
