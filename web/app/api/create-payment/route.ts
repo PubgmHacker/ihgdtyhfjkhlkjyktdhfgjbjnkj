@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Суммарное кол-во по товару (по всем размерам) для проверки остатка.
     const qtyByProduct = new Map<string, number>();
-    for (const it of aggregated.values()) {
+    for (const it of Array.from(aggregated.values())) {
       qtyByProduct.set(it.id, (qtyByProduct.get(it.id) ?? 0) + it.qty);
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       price: number; // копейки за единицу (из БД)
     }[] = [];
 
-    for (const it of aggregated.values()) {
+    for (const it of Array.from(aggregated.values())) {
       const product = productMap.get(it.id);
       if (!product) {
         return NextResponse.json(
