@@ -341,7 +341,7 @@ async def handle_webapp(message: Message, state: FSMContext, bot: Bot):
         "username": uname,
         "items": items,
         "total_kopecks": total_kopecks,
-        "total_rub": total_rub,
+        "total_rub": total_kopecks // 100,
         "contact": contact,
         "payment_method": payment_method,
         "status": "pending",
