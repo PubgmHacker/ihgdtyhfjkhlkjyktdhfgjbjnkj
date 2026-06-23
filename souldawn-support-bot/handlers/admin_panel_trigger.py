@@ -1,10 +1,11 @@
-from aiogram import Router, F, Bot
+from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import aiohttp
 import random
+from config import ADMIN_IDS, SUPPORT_CHAT_IDS, MINIAPP_URL
 
 router = Router()
 
@@ -13,7 +14,10 @@ class ReplyStates(StatesGroup):
 
 @router.message(Command("admin"))
 async def open_admin_panel_support(message: Message):
-    admin_url = "https://railway.app"
+    # Используем проверенный базовый URL вашего Mini App из настроек Railway
+    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
+    admin_url = base_url + "admin"
+    
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚙️ Панель Управления (Mini App)", web_app=WebAppInfo(url=admin_url))]
     ])
@@ -34,16 +38,13 @@ async def process_operator_reply_text(message: Message, state: FSMContext):
     text = message.text
     await state.clear()
 
+    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
-        # 1. Записываем ответ оператора в чат реального времени
         payload = {"ticketId": ticket_id, "sender": "operator", "text": text}
-        await session.post("https://railway.app", json=payload)
-        
-        # 2. АВТОАРХИВАЦИЯ: Меняем статус тикета на resolved (Решено / Перенесено в архив)
-        # Отправляем запрос на официальный эндпоинт закрытия тикетов вашей админки сайта
-        await session.post(f"https://railway.app{ticket_id}/reply", json={"reply": text})
+        await session.post(base_url + "api/tickets/messages", json=payload)
+        await session.post(base_url + f"api/admin/tickets/{ticket_id}/reply", json={"reply": text})
 
-    await message.answer("✅ <b>Ответ отправлен! Тикет автоматически помечен как 'Отвечено' и перенесен в архив на сайте и в ТГ-панели.</b>", parse_mode="HTML")
+    await message.answer("✅ <b>Ответ успешно отправлен и заархивирован!</b>", parse_mode="HTML")
 
 @router.message(Command("debug"))
 @router.callback_query(F.data == "admin:debug_menu")
@@ -64,9 +65,10 @@ async def call_debug_menu_click(event: Message | CallbackQuery):
 @router.callback_query(F.data == "debug:simulate_web")
 async def simulate_web_ticket(callback: CallbackQuery):
     fake_id = str(random.randint(100000, 999999))
+    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
         payload = {"telegramId": "8340654471", "category": "order", "message": "Тестовый запрос с сайта #" + fake_id}
-        await session.post("https://railway.app", json=payload)
+        await session.post(base_url + "api/tickets/create", json=payload)
     await callback.message.answer("✅ Имитация обращения с сайта выполнена через API!", parse_mode="HTML")
     await callback.answer()
 
@@ -82,8 +84,9 @@ async def simulate_tg_ticket(callback: CallbackQuery):
 
 @router.callback_query(F.data == "debug:test_db")
 async def test_db_connection(callback: CallbackQuery):
+    base_url = MINIAPP_URL if MINIAPP_URL.endswith("/") else MINIAPP_URL + "/"
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://railway.app") as res:
+        async with session.get(base_url + "api/tickets/history?telegramId=8340654471") as res:
             status = "SUCCESS ✅" if res.status == 200 else "ERROR ❌"
             await callback.message.answer("🔄 <b>Статус подключения к бэкенду БД:</b> " + status, parse_mode="HTML")
     await callback.answer()
