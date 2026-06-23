@@ -86,10 +86,18 @@ async def simulate_tg_ticket(callback: CallbackQuery):
 
 @router.callback_query(F.data == "debug:test_db")
 async def test_db_connection(callback: CallbackQuery):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(API_BASE + "/history?telegramId=8340654471") as res:
-            status = "SUCCESS ✅" if res.status == 200 else "ERROR ❌"
-            await callback.message.answer("🔄 <b>Статус подключения к бэкенду БД:</b> " + status, parse_mode="HTML")
+    # Явно настраиваем закрытие коннекторов для macOS/Railway стабильности
+    connector = aiohttp.TCPConnector(ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        try:
+            async with session.get(API_BASE + "/history?telegramId=8340654471", timeout=5.0) as res:
+                if res.status == 200:
+                    status = "SUCCESS ✅ (Связь с сайтом установлена)"
+                else:
+                    status = f"ERROR ❌ (Сайт ответил кодом {res.status})"
+                await callback.message.answer(f"🔄 <b>Статус подключения к бэкенду БД:</b> {status}", parse_mode="HTML")
+        except Exception as e:
+            await callback.message.answer(f"🔄 <b>Статус подключения:</b> ERROR ❌ (Сайт не отвечает: {e})", parse_mode="HTML")
     await callback.answer()
 
 @router.callback_query(F.data.startswith("ticket:reply:"))
