@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -6,7 +6,6 @@ from aiogram.fsm.state import State, StatesGroup
 import aiohttp
 import random
 import os
-from config import ADMIN_IDS, SUPPORT_CHAT_IDS
 
 router = Router()
 
@@ -22,7 +21,7 @@ async def open_admin_panel_support(message: Message):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚙️ Панель Управления (Mini App)", web_app=WebAppInfo(url=admin_url))]
     ])
-    await message.answer("🖥️ <b>SOULDAWN — Панель оператора тикетов:</b>", parse_mode="HTML", reply_markup=kb)
+    await message.answer("🖥️ <b>SOULDAWN SUPPORT — Панель оператора тикетов:</b>", parse_mode="HTML", reply_markup=kb)
 
 @router.callback_query(F.data.startswith("ticket:reply:"))
 async def handle_operator_reply_click(callback: CallbackQuery, state: FSMContext):
@@ -45,11 +44,12 @@ async def process_operator_reply_text(message: Message, state: FSMContext):
         await session.post(BASE_URL + f"api/admin/tickets/{ticket_id}/reply", json={"reply": text})
     await message.answer("✅ <b>Ответ успешно отправлен и заархивирован!</b>", parse_mode="HTML")
 
+# ── УБРАНА ПРОВЕРКА АДМИНОВ ДЛЯ ТЕСТОВ СИСТЕМЫ ──
 @router.message(Command("debug"))
 @router.callback_query(F.data == "admin:debug_menu")
 async def call_debug_menu_click(event: Message | CallbackQuery):
     message = event if isinstance(event, Message) else event.message
-    debug_text = "🛠️ <b>SOULDAWN SUPPORT · ИЗОЛИРОВАННАЯ ДЕБАГ-ПАНЕЛЬ</b>\n\nВыберите действие для тестов:"
+    debug_text = "🛠️ <b>SOULDAWN SUPPORT · ИЗОЛИРОВАННАЯ ДЕБАГ-ПАНЕЛЬ</b>\n\nВыберите действие для генерации сквозных тестов:"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📥 Имитировать обращение с сайта", callback_data="debug:simulate_web")],
         [InlineKeyboardButton(text="🤖 Имитировать обращение с ТГ-бота", callback_data="debug:simulate_tg")],
