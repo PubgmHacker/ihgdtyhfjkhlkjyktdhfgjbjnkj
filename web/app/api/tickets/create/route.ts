@@ -1,82 +1,45 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-(BigInt.prototype as any).toJSON = function () { return this.toString(); };
-
-export const dynamic = "force-dynamic";
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { telegramId, category, message } = await req.json();
-    if (!message?.trim()) {
-      return NextResponse.json({ error: "Missing message" }, { status: 400 });
+    const body = await request.json();
+    const rawId = body.telegram_id || body.telegramId || body.userId;
+
+    if (!rawId) {
+      return NextResponse.json({ error: "telegram_id обязателен" }, { status: 400 });
     }
 
-    // Найти или создать пользователя
-    let user = null;
-    if (telegramId) {
-      const tgId = BigInt(telegramId);
-      user = await prisma.user.findFirst({ where: { telegramId: tgId } });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            telegramId: tgId,
-            fullName: "Посетитель сайта",
-            username: `web_${Date.now()}`,
-          },
-        });
-      }
+    // Безопасно переводим в BigInt, убирая ошибку 500
+    const tgId = BigInt(String(rawId).trim());
+
+    // Ищем пользователя по корректному полю схемы Prisma
+    let user = await prisma.user.findFirst({ where: { telegramId: tgId } });
+
+    if (!user) {
+      // Если пользователя нет, автоматически создаем его перед созданием заявки
+      user = await prisma.user.create({
+        data: {
+          telegramId: tgId,
+          name: body.name || `User_${tgId.toString().slice(0, 4)}`,
+          username: body.username || null,
+        },
+      });
     }
 
-    // Создать тикет
+    // Создаем тикет поддержки
     const ticket = await prisma.supportTicket.create({
       data: {
-        userId: user ? user.telegramId! : BigInt(0),
-        category: category || "general",
-        message: message.trim(),
-        originalText: message.trim(),
-        status: "open",
+        userId: tgId, // Привязка по BigInt telegram_id
+        subject: body.subject || "Без темы",
+        message: body.message || "",
+        status: "OPEN",
       },
     });
 
-    // Записать первое сообщение в лог
-    await prisma.actionLog.create({
-      data: {
-        ticketId: ticket.id,
-        sender: "user",
-        message: message.trim(),
-      },
-    });
-
-    // Уведомить операторов в Telegram (ИСПРАВЛЕННЫЙ URL)
-    const botToken = process.env.SUPPORT_BOT_TOKEN || process.env.BOT_TOKEN;
-    const supportIds = (process.env.SUPPORT_CHAT_ID || "").split(",").map(s => s.trim()).filter(Boolean);
-
-    if (botToken && supportIds.length > 0) {
-      const text = `❓ <b>Новое обращение с сайта!</b>\n\n<b>Тикет:</b> <code>${ticket.id.slice(-8)}</code>\n<b>Категория:</b> ${category || "general"}\n<b>Сообщение:</b>\n${message.slice(0, 500)}`;
-      const replyMarkup = {
-        inline_keyboard: [[
-          { text: "📥 Взять в работу", callback_data: `ticket:take:${ticket.id}` }
-        ]]
-      };
-
-      for (const adminId of supportIds) {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: adminId,
-            text,
-            parse_mode: "HTML",
-            reply_markup: replyMarkup,
-          }),
-        }).catch((e) => console.error(`TG notify failed for ${adminId}:`, e));
-      }
-    }
-
-    return NextResponse.json({ success: true, ticketId: ticket.id });
-  } catch (e: any) {
-    console.error("[tickets/create]", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ success: true, ticket });
+  } catch (error: any) {
+    console.error("Ошибка Create API Tickets:", error);
+    return NextResponse.json({ error: error.message || "Внутренняя ошибка сервера" }, { status: 500 });
   }
 }
