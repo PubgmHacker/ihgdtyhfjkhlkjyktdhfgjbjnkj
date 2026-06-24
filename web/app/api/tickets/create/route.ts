@@ -24,21 +24,29 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Формируем тему, безопасно подмешивая категорию, если автотест её прислал
-    const computedSubject = body.subject 
-      ? String(body.subject) 
-      : body.category 
-        ? `[${String(body.category).toUpperCase()}] Обращение` 
-        : "Без темы";
+    // Собираем весь текст из запроса в одну понятную строку
+    const incomingText = body.message || body.text || body.subject || body.description || "Обращение из API";
+    const categoryPrefix = body.category ? `[${String(body.category).toUpperCase()}] ` : "";
+    const fullMessage = `${categoryPrefix}${incomingText}`;
 
-    // 3. Создаем тикет поддержки (БЕЗ использования поля category в объекте)
+    // 2. Создаем динамический объект данных
+    const ticketData: any = {
+      userId: tgId,
+      status: "OPEN",
+    };
+
+    // 3. Безопасно маппим текст во все возможные варианты названий полей в Prisma
+    const fields = prisma.supportTicket.fields;
+    
+    if ('message' in fields) ticketData.message = fullMessage;
+    if ('text' in fields) ticketData.text = fullMessage;
+    if ('subject' in fields) ticketData.subject = body.subject || "Без темы";
+    if ('title' in fields) ticketData.title = body.subject || "Обращение";
+    if ('description' in fields) ticketData.description = fullMessage;
+
+    // 4. Создаем тикет поддержки
     const ticket = await prisma.supportTicket.create({
-      data: {
-        userId: tgId,
-        subject: computedSubject,
-        message: body.message || "Обращение из API",
-        status: "OPEN",
-      },
+      data: ticketData,
     });
 
     return NextResponse.json({ success: true, ticket });
