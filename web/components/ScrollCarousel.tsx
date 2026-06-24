@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * SOULDAWN — 3D карусель коллекции.
- * Использует реальные товары из БД через useProducts.
- * 3D-эффект: rotateY + perspective + whileHover подъём.
- * Параллакс секции при скролле через useScroll/useTransform.
- */
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { EASE } from "@/lib/motion";
@@ -29,68 +23,63 @@ export default function ScrollCarousel() {
 
   return (
     <section className="section-padding bg-bg overflow-hidden">
-      <div>
-        <div className="max-w-7xl mx-auto">
-          {/* Заголовок */}
-          <motion.div
-            className="flex items-center gap-6 mb-10"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.6 }}
-            transition={{ duration: 0.6, ease: EASE }}
-          >
-            <div>
-              <p className="text-xs font-bold tracking-superwide uppercase text-accent mb-2">Коллекция</p>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight uppercase">
-                <span className="text-text">АНГЕЛ </span>
-                <span className="dawn-text">VS ДЕМОН</span>
-              </h2>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Назад"
-                onClick={() => scrollBy(-1)}
-                className="h-9 w-9 flex items-center justify-center border border-line text-muted hover:text-accent hover:border-accent transition-colors"
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                aria-label="Вперёд"
-                onClick={() => scrollBy(1)}
-                className="h-9 w-9 flex items-center justify-center border border-line text-muted hover:text-accent hover:border-accent transition-colors"
-              >
-                →
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4"
+        >
+          <div>
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight uppercase">
+              Коллекция
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Эксклюзивные товары SOULDAWN
+            </p>
           </div>
+          
+          <div className="flex gap-2">
+            <button 
+              onClick={() => scrollBy(-1)}
+              className="p-3 rounded-full border border-border hover:bg-white/5 transition"
+            >
+              ←
+            </button>
+            <button 
+              onClick={() => scrollBy(1)}
+              className="p-3 rounded-full border border-border hover:bg-white/5 transition"
+            >
+              →
+            </button>
+          </div>
+        </motion.div>
 
-          {/* 3D-карусель */}
-          <div
-            ref={scrollerRef}
-            className="flex gap-6 md:gap-8 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 scroll-smooth"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {items.map((product, i) => (
-              <motion.div
-                key={product.id}
-                className="snap-start shrink-0 w-[64vw] sm:w-[38vw] lg:w-[24vw]"
-                initial={{ opacity: 0, y: 40, rotateY: -12 }}
-                whileInView={{ opacity: 1, y: 0, rotateY: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.7, delay: i * 0.07, ease: EASE }}
-                whileHover={{ y: -8, scale: 1.02, rotateY: 3 }}
-                style={{ transformStyle: "preserve-3d", perspective: 900 }}
-              >
-                <ProductCard product={product} onProductClick={(p) => setSelected(p)} />
-              </div>
-            ))}
-          </div>
+        <div 
+          ref={scrollerRef}
+          className="flex gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-8"
+          style={{ perspective: "1000px" }}
+        >
+          {items.map((product, idx) => (
+            <motion.div
+              key={product.id}
+              className="snap-center shrink-0 w-[280px] md:w-[350px]"
+              initial={{ opacity: 0, rotateY: 15 }}
+              whileInView={{ opacity: 1, rotateY: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.05 }}
+              whileHover={{ y: -10 }}
+            >
+              <ProductCard product={product} onClick={() => setSelected(product)} />
+            </motion.div>
+          ))}
         </div>
       </div>
 
-      {selected && <ProductModal product={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <ProductModal product={selected} onClose={() => setSelected(null)} />
+      )}
     </section>
   );
 }
