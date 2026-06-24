@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/lib/types";
 import { fadeUp, viewportOnce } from "@/lib/motion";
+import { useBuyMode } from "@/lib/useBuyMode";
 
 export type { Product };
 
@@ -170,6 +171,9 @@ export default function ProductCard({ product, layout = "grid", onProductClick }
     onProductClick?.(product);
   };
 
+  const buyMode = useBuyMode();
+  const buyLabel = buyMode === "preorder" ? "Предзаказ" : "В корзину";
+  const buyLabelDone = buyMode === "preorder" ? "Предзаказ оформлен ✓" : "Добавлено ✓";
   const defaultSize = product.sizes?.[0] || "Универсальный";
 
   /* ── List layout ── */
@@ -242,7 +246,7 @@ export default function ProductCard({ product, layout = "grid", onProductClick }
                     : "border-white/[0.08] text-muted hover:border-accent/40 hover:text-accent"
                 }`}
               >
-                {added ? "Добавлено ✓" : "В корзину"}
+                {added ? buyLabelDone : buyLabel}
               </button>
             )}
           </div>
@@ -352,7 +356,7 @@ export default function ProductCard({ product, layout = "grid", onProductClick }
                   : "bg-accent text-bg hover:bg-white"
               }`}
             >
-              {added ? "Добавлено ✓" : "В корзину"}
+              {added ? buyLabelDone : buyLabel}
             </button>
           )}
 

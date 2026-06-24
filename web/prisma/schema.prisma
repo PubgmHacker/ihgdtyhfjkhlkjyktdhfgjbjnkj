@@ -237,3 +237,15 @@ model Review {
   @@index([tgDate])
   @@map("reviews")
 }
+
+// ─── Настройки магазина ──────────────────────────────────────────
+// key/value хранилище для глобальных настроек (управляется из админки).
+// Пример: buy_button_mode = "preorder" | "buy"
+model Settings {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique
+  value     String   @default("")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("settings")
+}

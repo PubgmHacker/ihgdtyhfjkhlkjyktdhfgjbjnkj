@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Product } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
+import { useBuyMode } from "@/lib/useBuyMode";
 
 interface ProductModalProps {
   product: Product;
@@ -94,6 +95,8 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
     .filter((i) => i.product.id === product.id)
     .reduce((s, i) => s + i.quantity, 0);
   const canAddMore = stock === null ? true : inCart < stock;
+  const buyMode = useBuyMode();
+  const buyLabel = buyMode === "preorder" ? "Предзаказ" : "Добавить в корзину";
 
   /* lock body scroll */
   useEffect(() => {
@@ -276,7 +279,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                     ? "Добавлено в корзину ✓"
                     : !canAddMore
                     ? "Максимум в корзине"
-                    : "Добавить в корзину"}
+                    : buyLabel}
                 </button>
               ) : (
                 <div className="w-full py-3.5 text-center text-[11px] font-black tracking-[0.15em] uppercase text-muted/30 border border-white/[0.06]">
