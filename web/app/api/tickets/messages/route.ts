@@ -1,101 +1,139 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
-const BOT_TOKEN = process.env.BOT_TOKEN || "";
-const SUPPORT_CHAT_ID = process.env.SUPPORT_CHAT_ID || "8340654471";
+export const dynamic = "force-dynamic";
 
-const SYSTEM_PROMPT = `Ты — ИИ-ассистент поддержки бренда одежды SOULDAWN. Помогай клиентам отвечать на вопросы о заказах, качестве, наличии. Отвечай вежливо и лаконично.
-⚠️ ВАЖНО: Если пользователь просит позвать человека, требует оператора, хочет оформить возврат или ты не можешь помочь — напиши строго одну фразу: '[OPERATOR]' и абсолютно ничего больше.`;
+const SYSTEM_PROMPT = `Ты — ИИ-ассистент поддержки бренда одежды SOULDAWN. Отвечай кратко и по делу на вопросы о заказах, доставке, размерах, возврате.
+Если пользователь просит оператора, хочет возврат, или ты не можешь помочь — ответь строго: [OPERATOR]`;
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const ticketId = searchParams.get("ticketId");
-    if (!ticketId) return NextResponse.json({ error: "Ticket ID required" }, { status: 400 });
+    if (!ticketId) return NextResponse.json({ messages: [] });
 
-    const messages = await (prisma as any).action_logs.findMany({
-      where: { ticket_id: ticketId },
-      orderBy: { created_at: "asc" },
+    const logs = await prisma.actionLog.findMany({
+      where: { ticketId },
+      orderBy: { createdAt: "asc" },
     });
-    return NextResponse.json({ messages });
-  } catch (error: any) { return NextResponse.json({ error: error.message }, { status: 500 }); }
+
+    return NextResponse.json({ messages: logs });
+  } catch (e: any) {
+    console.error("[tickets/messages GET]", e);
+    return NextResponse.json({ messages: [] });
+  }
 }
 
 export async function POST(req: Request) {
   try {
     const { ticketId, sender, text } = await req.json();
-    if (!ticketId || !sender || !text) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!ticketId || !text?.trim()) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
 
-    const logModel = (prisma as any).action_logs;
-    const ticketModel = (prisma as any).support_tickets || (prisma as any).supportTicket;
-
-    // 1. Записываем сообщение пользователя
-    const userMessage = await logModel.create({
-      data: { ticket_id: ticketId, sender: sender, message: text, created_at: new Date() } as any
+    // Записать сообщение пользователя
+    await prisma.actionLog.create({
+      data: { ticketId, sender: sender || "user", message: text.trim() },
     });
 
-    // 2. Если пишет пользователь, и тикет находится в ведении ИИ
+    // Если пишет пользователь — запустить ИИ или уведомить оператора
     if (sender === "user") {
-      const currentTicket = await ticketModel.findFirst({ where: { id: ticketId } });
-      
-      // Если менеджер еще не перехватил тикет (статус open)
-      if (currentTicket && currentTicket.status === "open") {
-        let aiAnswer = "";
-        
-        try {
-          // Запрашиваем ответ у быстрой бесплатной модели Gemini Core
-          const aiRes = await fetch("https://openrouter.ai", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash:free",
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: text }]
-            })
-          });
-          const aiData = await aiRes.json();
-          aiAnswer = aiData.choices[0].message.content.strip ? aiData.choices[0].message.content.strip() : aiData.choices[0].message.content.trim();
-        } catch (e) {
-          aiAnswer = "[OPERATOR]"; // При сбое сети ИИ сразу зовем человека
+      const ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId } });
+
+      if (ticket?.status === "open") {
+        const apiKey = process.env.OPENAI_API_KEY;
+        let aiAnswer = "[OPERATOR]";
+
+        if (apiKey) {
+          try {
+            const baseUrl = apiKey.startsWith("sk-or-")
+              ? "https://openrouter.ai/api/v1"
+              : "https://api.openai.com/v1";
+
+            const aiRes = await fetch(`${baseUrl}/chat/completions`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash:free",
+                messages: [
+                  { role: "system", content: SYSTEM_PROMPT },
+                  { role: "user", content: text.trim() },
+                ],
+              }),
+            });
+            const aiData = await aiRes.json();
+            aiAnswer = aiData?.choices?.[0]?.message?.content?.trim() || "[OPERATOR]";
+          } catch {
+            aiAnswer = "[OPERATOR]";
+          }
         }
 
-        // Проверяем решение ИИ
         if (aiAnswer.includes("[OPERATOR]")) {
-          // ПЕРЕКЛЮЧАЕМ РЕЖИМ НА МЕНЕДЖЕРА (меняем статус на operator)
-          await ticketModel.update({
+          // Эскалация — переключить на оператора
+          await prisma.supportTicket.update({
             where: { id: ticketId },
-            data: { status: "operator" } as any
+            data: { status: "operator" },
+          });
+          await prisma.actionLog.create({
+            data: {
+              ticketId,
+              sender: "system",
+              message: "🔄 Запрос передан оператору. Ожидайте ответа.",
+            },
           });
 
-          // Записываем системный лог переключения
-          await logModel.create({
-            data: { ticket_id: ticketId, sender: "system", message: "🔄 ИИ передал диалог менеджеру. Менеджер уведомлен.", created_at: new Date() } as any
-          });
+          // Уведомить операторов (ИСПРАВЛЕННЫЙ URL)
+          const botToken = process.env.SUPPORT_BOT_TOKEN || process.env.BOT_TOKEN;
+          const supportIds = (process.env.SUPPORT_CHAT_ID || "").split(",").map(s => s.trim()).filter(Boolean);
 
-          // Отправляем сквозную карточку операторам в Telegram
-          if (BOT_TOKEN) {
-            const supportIds = SUPPORT_CHAT_ID.split(",");
-            const textAlert = `👨‍💻 <b>Эскалация тикета МТС-стайл!</b>\n\n<b>ID тикета:</b> <code>${ticketId}</code>\n<b>Юзер позвал человека или ИИ не справился.</b>\n\n<b>Последний вопрос:</b> <i>${text}</i>`;
-            const replyMarkup = { inline_keyboard: [[{ text: "💬 Ответить из Telegram", callback_data: `ticket:reply:${ticketId}` }]] };
-
+          if (botToken && supportIds.length > 0) {
+            const alertText = `👨‍💻 <b>Эскалация тикета!</b>\n\n<b>ID:</b> <code>${ticketId.slice(-8)}</code>\n<b>Вопрос:</b> <i>${text.slice(0, 300)}</i>`;
+            const replyMarkup = {
+              inline_keyboard: [[
+                { text: "💬 Ответить", callback_data: `ticket:reply:${ticketId}` }
+              ]]
+            };
             for (const adminId of supportIds) {
-              await fetch(`https://telegram.org{BOT_TOKEN}/sendMessage`, {
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: adminId, text: textAlert, parse_mode: "HTML", reply_markup: replyMarkup })
+                body: JSON.stringify({
+                  chat_id: adminId,
+                  text: alertText,
+                  parse_mode: "HTML",
+                  reply_markup: replyMarkup,
+                }),
               }).catch(() => {});
             }
           }
         } else {
-          // ИИ справился самостоятельно! Записываем его ответ в чат
-          await logModel.create({
-            data: { ticket_id: ticketId, sender: "ai", message: aiAnswer, created_at: new Date() } as any
+          // ИИ ответил — записать
+          await prisma.actionLog.create({
+            data: { ticketId, sender: "ai", message: aiAnswer },
           });
+        }
+      } else if (ticket?.status === "operator" && ticket.acceptedBy) {
+        // Тикет у оператора — уведомить его напрямую
+        const botToken = process.env.SUPPORT_BOT_TOKEN || process.env.BOT_TOKEN;
+        if (botToken) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: ticket.acceptedBy.toString(),
+              text: `💬 Новое сообщение (тикет #${ticketId.slice(-8)}):\n\n${text.slice(0, 500)}`,
+            }),
+          }).catch(() => {});
         }
       }
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) { return NextResponse.json({ error: error.message }, { status: 500 }); }
+  } catch (e: any) {
+    console.error("[tickets/messages POST]", e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

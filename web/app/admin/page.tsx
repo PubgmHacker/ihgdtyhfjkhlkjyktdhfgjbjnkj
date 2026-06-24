@@ -1,112 +1,161 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+interface Ticket {
+  id: string; category: string; message: string; status: string;
+  createdAt: string; user?: { name: string; username?: string; telegramId?: string } | null;
+}
+interface Log { id: string; sender: string; message: string; createdAt: string; }
 
 export default function AdminTicketsPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"active" | "archive" | "diagnose">("active");
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
-  const [replyText, setReplyText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [diagLogs, setDiagLogs] = useState<any[]>([]);
-  const [isFixing, setIsFixing] = useState(false);
-  const [fixResult, setFixResult] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tab, setTab] = useState<"active" | "archive">("active");
+  const [selected, setSelected] = useState<Ticket | null>(null);
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [reply, setReply] = useState("");
+  const [sending, setSending] = useState(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
-  const loadTickets = async () => {
-    try {
-      const res = await fetch("/api/admin/tickets");
-      const data = await res.json();
-      if (data.tickets) setTickets(data.tickets);
-    } catch (err) { console.error(err); }
+  const load = async () => {
+    const res = await fetch("/api/admin/tickets").catch(() => null);
+    if (!res?.ok) return;
+    const data = await res.json();
+    setTickets(data.tickets || []);
   };
 
-  const runDiagnostics = async () => {
-    try {
-      const res = await fetch("/api/admin/diagnose");
-      const data = await res.json();
-      if (data.reports) setDiagLogs(data.reports);
-    } catch (err) { console.error(err); }
-  };
-
-  const runAutoFix = async () => {
-    setIsFixing(true);
-    setFixResult(null);
-    try {
-      const res = await fetch("/api/admin/diagnose", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        setFixResult(data.message);
-        runDiagnostics();
-      } else {
-        setFixResult("❌ Ошибка автоисправления: " + data.error);
-      }
-    } catch (err: any) {
-      setFixResult("🚨 Сбой сети: " + err.message);
-    } finally {
-      setIsFixing(false);
-    }
+  const loadLogs = async (ticketId: string) => {
+    const res = await fetch(`/api/tickets/messages?ticketId=${ticketId}`).catch(() => null);
+    if (!res?.ok) return;
+    const data = await res.json();
+    setLogs(data.messages || []);
+    setTimeout(() => logsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   useEffect(() => {
-    loadTickets();
-    runDiagnostics();
-    const interval = setInterval(loadTickets, 4000);
-    return () => clearInterval(interval);
+    load();
+    const iv = setInterval(load, 5000);
+    return () => clearInterval(iv);
   }, []);
 
-  const activeTickets = tickets.filter((t: any) => t.status === "open" || t.status === "operator");
-  const archiveTickets = tickets.filter((t: any) => t.status === "resolved" || t.status === "closed");
+  useEffect(() => {
+    if (!selected) return;
+    loadLogs(selected.id);
+    const iv = setInterval(() => loadLogs(selected.id), 3000);
+    return () => clearInterval(iv);
+  }, [selected]);
+
+  const sendReply = async () => {
+    if (!selected || !reply.trim()) return;
+    setSending(true);
+    await fetch("/api/admin/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketId: selected.id, message: reply.trim() }),
+    }).catch(() => {});
+    setReply("");
+    setSending(false);
+    loadLogs(selected.id);
+  };
+
+  const active = tickets.filter(t => t.status === "open" || t.status === "operator");
+  const archive = tickets.filter(t => t.status === "resolved" || t.status === "closed");
+  const shown = tab === "active" ? active : archive;
+
+  const senderColor = (s: string) => {
+    if (s === "user") return "bg-zinc-800 text-zinc-200 self-start";
+    if (s === "operator") return "bg-amber-500 text-black self-end";
+    if (s === "ai") return "bg-blue-900/60 text-blue-200 self-start";
+    return "bg-zinc-900 text-zinc-500 self-start text-[10px] italic";
+  };
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-zinc-300 p-4 font-mono select-none">
-      <div className="text-center my-2">
-        <h1 className="text-xl font-black text-zinc-100 uppercase italic">SOUL<span className="text-amber-500">DAWN</span> · TERMINAL</h1>
-        <p className="text-[8px] text-zinc-600 uppercase tracking-widest">// AUTOMATED_AI_DIAGNOSTICS_INTERFACE</p>
-      </div>
-
-      <div className="flex border border-zinc-800 bg-zinc-900/40 mb-4 p-1 rounded-sm text-xs">
-        <button onClick={() => setActiveTab("active")} className={`flex-1 py-2 text-center uppercase font-black cursor-pointer border-none ${activeTab === "active" ? "bg-amber-500 text-black" : "text-zinc-500"}`}>[ АКТИВНЫЕ ({activeTickets.length}) ]</button>
-        <button onClick={() => setActiveTab("archive")} className={`flex-1 py-2 text-center uppercase font-black cursor-pointer border-none ${activeTab === "archive" ? "bg-amber-500 text-black" : "text-zinc-500"}`}>[ АРХИВ ({archiveTickets.length}) ]</button>
-        <button onClick={() => setActiveTab("diagnose")} className={`flex-1 py-2 text-center uppercase font-black cursor-pointer border-none ${activeTab === "diagnose" ? "bg-amber-500 text-black" : "text-zinc-500"}`}>[ 🛠️ ИИ_ДИАГНОСТИКА ]</button>
-      </div>
-
-      {activeTab === "diagnose" ? (
-        <div className="space-y-4">
-          <div className="border border-zinc-800 bg-zinc-950 p-3 rounded-sm space-y-2 text-xs">
-            <h3 className="text-xs font-black text-amber-500 uppercase tracking-wider">// КАРТА СИСТЕМНЫХ ТРАССИРОВОК:</h3>
-            <div className="space-y-2 max-h-[220px] overflow-y-auto">
-              {diagLogs.length === 0 ? (
-                <div className="text-zinc-600">// Сбор логов... Запустите автоисправление ниже.</div>
-              ) : (
-                diagLogs.map((log) => (
-                  <div key={log.id} className="p-2 bg-zinc-900/40 border border-zinc-900 flex flex-col gap-1 rounded-sm text-left">
-                    <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-zinc-500 font-bold">Файл: <code className="text-zinc-300">{log.path}</code></span>
-                      <span className={`px-1.5 py-0.5 font-black uppercase text-[8px] border rounded-sm ${log.status === "OK" ? "bg-green-950/40 text-green-400 border-green-500/20" : "bg-red-950/40 text-red-400 border-red-500/20"}`}>{log.status} | {log.code}</span>
-                    </div>
-                    <p className="text-[11px] text-zinc-400">{log.info}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          {fixResult && <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs rounded-sm text-left leading-relaxed">{fixResult}</div>}
-          <button onClick={runAutoFix} disabled={isFixing} className="w-full bg-transparent border-2 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-black py-4 uppercase tracking-widest text-xs rounded-sm cursor-pointer transition-all active:scale-95">{isFixing ? "⚡ ВЫПОЛНЯЕТСЯ АВТОИСПРАВЛЕНИЕ..." : "🛠️ ИСПРАВИТЬ ВСЕ ОБНАРУЖЕННЫЕ БАГИ"}</button>
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-300 font-mono flex flex-col">
+      {/* Header */}
+      <div className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+        <h1 className="text-sm font-black uppercase text-zinc-100">
+          SOUL<span className="text-amber-500">DAWN</span> · Поддержка
+        </h1>
+        <div className="flex gap-2 text-xs">
+          <button onClick={() => { setTab("active"); setSelected(null); }}
+            className={`px-3 py-1.5 font-bold uppercase ${tab === "active" ? "bg-amber-500 text-black" : "text-zinc-500 hover:text-zinc-300"}`}>
+            Активные ({active.length})
+          </button>
+          <button onClick={() => { setTab("archive"); setSelected(null); }}
+            className={`px-3 py-1.5 font-bold uppercase ${tab === "archive" ? "bg-amber-500 text-black" : "text-zinc-500 hover:text-zinc-300"}`}>
+            Архив ({archive.length})
+          </button>
         </div>
-      ) : (
-        <div className="space-y-2 text-left text-xs">
-          {(activeTab === "active" ? activeTickets : archiveTickets).length === 0 ? (
-            <div className="border border-dashed border-zinc-800 p-8 text-center text-zinc-600 uppercase">// Запросы отсутствуют.</div>
-          ) : (
-            (activeTab === "active" ? activeTickets : archiveTickets).map((ticket: any) => (
-              <div key={ticket.id} onClick={() => setSelectedTicket(ticket)} className="bg-zinc-900/20 border border-zinc-800 p-3 rounded-sm border-l-2 border-l-amber-500 cursor-pointer">
-                <div className="flex justify-between items-center text-[10px]"><span className="font-bold text-zinc-400 uppercase bg-zinc-900 px-1 border border-zinc-800">{ticket.user ? ticket.user.name : "Посетитель"}</span><span className="text-zinc-600">ID: #{ticket.id.slice(-5)}</span></div>
-                <p className="text-zinc-300 truncate mt-1">{ticket.message}</p>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Список тикетов */}
+        <div className="w-72 border-r border-zinc-800 overflow-y-auto flex-shrink-0">
+          {shown.length === 0 ? (
+            <div className="p-6 text-center text-zinc-600 text-xs uppercase">Нет обращений</div>
+          ) : shown.map(t => (
+            <div key={t.id} onClick={() => setSelected(t)}
+              className={`p-3 border-b border-zinc-800/50 cursor-pointer hover:bg-zinc-800/40 transition-colors ${selected?.id === t.id ? "bg-zinc-800/60 border-l-2 border-l-amber-500" : ""}`}>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase">{t.user?.name || "Посетитель"}</span>
+                <span className={`text-[8px] px-1.5 py-0.5 font-bold uppercase ${t.status === "operator" ? "bg-amber-500/20 text-amber-400" : "bg-zinc-800 text-zinc-500"}`}>
+                  {t.status === "operator" ? "У оператора" : t.status === "open" ? "Открыт" : t.status}
+                </span>
               </div>
-            ))
+              <p className="text-xs text-zinc-300 truncate">{t.message}</p>
+              <p className="text-[9px] text-zinc-600 mt-1">{t.category} · #{t.id.slice(-6)}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Чат тикета */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {!selected ? (
+            <div className="flex-1 flex items-center justify-center text-zinc-600 text-xs uppercase">
+              Выбери тикет слева
+            </div>
+          ) : (
+            <>
+              {/* Шапка тикета */}
+              <div className="border-b border-zinc-800 px-4 py-2 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-zinc-200">{selected.user?.name || "Посетитель"}</span>
+                  {selected.user?.username && <span className="text-[10px] text-zinc-500 ml-2">@{selected.user.username}</span>}
+                  {selected.user?.telegramId && <span className="text-[10px] text-zinc-600 ml-2">ID: {selected.user.telegramId}</span>}
+                </div>
+                <span className="text-[9px] text-zinc-500 uppercase">{selected.category} · #{selected.id.slice(-8)}</span>
+              </div>
+
+              {/* Сообщения */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 flex flex-col">
+                {logs.map(log => (
+                  <div key={log.id} className={`max-w-[80%] rounded-sm px-3 py-2 text-xs flex flex-col gap-0.5 ${senderColor(log.sender)}`}>
+                    <span className="text-[8px] opacity-60 uppercase font-bold">{log.sender}</span>
+                    <span>{log.message}</span>
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+
+              {/* Поле ответа */}
+              <div className="border-t border-zinc-800 p-3 flex gap-2">
+                <input
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendReply()}
+                  placeholder="Ответ оператора... (Enter — отправить)"
+                  style={{ fontSize: "16px" }}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500 rounded-sm"
+                />
+                <button onClick={sendReply} disabled={sending || !reply.trim()}
+                  className="bg-amber-500 text-black font-black text-[10px] px-4 uppercase disabled:opacity-40 rounded-sm">
+                  {sending ? "..." : "Отправить"}
+                </button>
+              </div>
+            </>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
