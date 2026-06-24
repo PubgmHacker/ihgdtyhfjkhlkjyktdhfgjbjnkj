@@ -24,23 +24,21 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Формируем безопасный объект данных для тикета
-    const ticketData: any = {
-      userId: tgId,
-      subject: body.subject || body.category || "Без темы",
-      message: body.message || "Обращение из API",
-      status: "OPEN",
-    };
+    // 2. Формируем тему, безопасно подмешивая категорию, если автотест её прислал
+    const computedSubject = body.subject 
+      ? String(body.subject) 
+      : body.category 
+        ? `[${String(body.category).toUpperCase()}] Обращение` 
+        : "Без темы";
 
-    // 3. Динамическая проверка схемы: добавляем category, только если свойство есть в модели
-    if ('category' in prisma.supportTicket.fields) {
-      // Если это Enum, можно попробовать передать строку в верхнем регистре, либо дефолтное значение
-      ticketData.category = body.category ? String(body.category).toUpperCase() : "GENERAL";
-    }
-
-    // 4. Создаем тикет поддержки
+    // 3. Создаем тикет поддержки (БЕЗ использования поля category в объекте)
     const ticket = await prisma.supportTicket.create({
-      data: ticketData,
+      data: {
+        userId: tgId,
+        subject: computedSubject,
+        message: body.message || "Обращение из API",
+        status: "OPEN",
+      },
     });
 
     return NextResponse.json({ success: true, ticket });
