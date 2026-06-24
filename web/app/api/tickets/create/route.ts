@@ -12,9 +12,8 @@ export async function POST(request: Request) {
 
     const tgId = BigInt(String(rawId).trim());
 
-    // 1. Находим пользователя (или создаем через Raw SQL, если его нет)
+    // 1. Находим пользователя или создаем через Raw SQL
     const users: any[] = await prisma.$queryRaw`SELECT id FROM "users" WHERE "telegram_id" = ${tgId} LIMIT 1`;
-    
     if (users.length === 0) {
       const name = body.name || `User_${tgId.toString().slice(0, 4)}`;
       const username = body.username || null;
@@ -25,14 +24,12 @@ export async function POST(request: Request) {
       `;
     }
 
-    // 2. Собираем сообщение для записи
     const incomingText = body.message || body.text || body.subject || body.description || "Обращение из API";
     const categoryPrefix = body.category ? `[${String(body.category).toUpperCase()}] ` : "";
     const fullMessage = `${categoryPrefix}${incomingText}`;
     const subject = body.subject || "Без темы";
 
-    // 3. Выполняем запись в support_tickets через Raw SQL в обход схем Prisma
-    // Пробуем записать в стандартные колонки PostgreSQL (user_id, message/text/subject, status)
+    // 2. Пишем в базу данных
     try {
       await prisma.$executeRaw`
         INSERT INTO "support_tickets" ("user_id", "subject", "message", "status")
@@ -40,13 +37,11 @@ export async function POST(request: Request) {
       `;
     } catch (e) {
       try {
-        // Альтернативный вариант, если колонок subject/message нет, а есть просто text
         await prisma.$executeRaw`
           INSERT INTO "support_tickets" ("user_id", "text", "status")
           VALUES (${tgId}, ${fullMessage}, 'OPEN')
         `;
       } catch (e2) {
-        // Самый минималистичный вариант (только юзер и статус)
         await prisma.$executeRaw`
           INSERT INTO "support_tickets" ("user_id", "status")
           VALUES (${tgId}, 'OPEN')
@@ -54,7 +49,26 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, message: "Тикет успешно создан через Raw SQL" });
+    // 3. ОТПРАВКА УВЕДОМЛЕНИЯ В TELEGRAM БОТУ (Пинок боту через HTTP)
+    try {
+      // Замените localhost:8080 на реальный внутренний хост вашего бота в Railway, если они в одной сети
+      const BOT_SERVER_URL = process.env.BOT_SERVER_URL || "http://localhost:8080/webhook/new_ticket";
+      
+      await fetch(BOT_SERVER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telegram_id: tgId.toString(),
+          message: fullMessage,
+          subject: subject
+        }),
+      });
+    } catch (botError) {
+      console.error("Бот выключен или недоступен для уведомлений:", botError);
+      // Не прерываем ответ клиенту, даже если бот не ответил
+    }
+
+    return NextResponse.json({ success: true, message: "Тикет создан" });
   } catch (error: any) {
     console.error("Ошибка Create API Tickets (Raw SQL):", error);
     return NextResponse.json({ error: error.message || "Внутренняя ошибка сервера" }, { status: 500 });
