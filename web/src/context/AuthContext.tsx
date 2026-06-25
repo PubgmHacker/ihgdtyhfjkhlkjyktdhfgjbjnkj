@@ -106,7 +106,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      await loadMe();
+      const hasSession = await loadMe();
+      if (!hasSession && typeof window !== "undefined") {
+        try {
+          const tg = (window as any)?.Telegram?.WebApp;
+          if (tg?.initData) {
+            const res = await fetch("/api/auth/mini-app", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ initData: tg.initData }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.user) {
+                setUser(data.user);
+                if (data.token) setToken(data.token);
+              }
+            }
+          }
+        } catch {}
+      }
       setLoading(false);
     })();
   }, [loadMe]);

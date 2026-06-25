@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
-from config import MINIAPP_URL
+from config import MINIAPP_URL, ADMIN_IDS
 from utils import _fmt_price
 
 
