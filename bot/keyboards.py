@@ -16,12 +16,11 @@ def main_kb() -> InlineKeyboardMarkup:
     info_row = []
     if SITE_URL:
         info_row.append(InlineKeyboardButton(text="🌐  Сайт", url=SITE_URL))
-    info_row.append(InlineKeyboardButton(text="ℹ️  Инфо", callback_data="menu:info"))
+    info_row.append(InlineKeyboardButton(text="❓  FAQ", callback_data="menu:info"))
     rows.append(info_row)
 
     rows.append([
         InlineKeyboardButton(text="💬  Поддержка", url="https://t.me/souldawnsupport_bot"),
-        InlineKeyboardButton(text="🔗  Ссылки", callback_data="menu:links"),
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
