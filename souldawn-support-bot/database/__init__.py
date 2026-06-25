@@ -1,4 +1,10 @@
-"""SOULDAWN — Database package. Re-export everything."""
+"""SOULDAWN Support Bot — Database package.
+
+The support bot connects to the same shared PostgreSQL database.
+Tables are created and migrated by Prisma (web service).
+Ticket creation goes through the web API (/api/tickets/*) when SITE_URL is set.
+Direct DB functions are kept as fallback when the web API is unavailable.
+"""
 from database.connection import (
     init_db,
     dispose_db,

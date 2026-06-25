@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
-from config import MINIAPP_URL, SITE_URL
+from config import MINIAPP_URL, SITE_URL, SUPPORT_MINIAPP_URL
 from utils import _fmt_price
 
 
@@ -69,7 +69,7 @@ def operator_confirm_kb() -> InlineKeyboardMarkup:
 def ai_helpful_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✅  Спасибо!", callback_data="ai:thanks")],
-        [InlineKeyboardButton(text="💬  Оператор", callback_data="operator")],
+        [InlineKeyboardButton(text="💬  Оператор", callback_data="ai:to_operator")],
     ])
 
 
@@ -78,21 +78,4 @@ def pay_kb(confirmation_url: str, total_kopecks: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=f"💳  Оплатить {_fmt_price(total_kopecks)}", url=confirmation_url)],
         [InlineKeyboardButton(text="🔄  Проверить оплату", callback_data="check_payment")],
         [InlineKeyboardButton(text="❌  Отмена", callback_data="back_to_menu")],
-    ])
-
-
-def _stats_back_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="stats:main")]
-    ])
-
-
-def _stats_main_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📊 Обзор", callback_data="stats:overview"),
-         InlineKeyboardButton(text="💰 Финансы", callback_data="stats:finance")],
-        [InlineKeyboardButton(text="📦 Заказы", callback_data="stats:orders"),
-         InlineKeyboardButton(text="👥 Пользователи", callback_data="stats:users")],
-        [InlineKeyboardButton(text="🟢 Онлайн", callback_data="stats:online"),
-         InlineKeyboardButton(text="📋 Расходы", callback_data="stats:expenses")],
     ])

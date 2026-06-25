@@ -1,0 +1,62 @@
+export interface Product {
+  id: string;
+  slug?: string;
+  name: string;
+  price: string;
+  oldPrice?: string;
+  category: string;
+  gender: "Мужчинам" | "Женщинам" | "Унисекс";
+  collection: string;
+  description?: string;
+  fullDescription?: string;
+  details?: string[];
+  material?: string;
+  care?: string;
+  sizes?: string[];
+  tag?: string;
+  image?: string;
+  images?: string[];
+  stock?: number;
+  badge?: "NEW" | "HIT" | "SALE" | null;
+  gradient: string;
+  pattern?: "lines" | "dots" | "cross" | "none";
+  icon?:
+    | "tee"
+    | "hoodie"
+    | "pants"
+    | "cap"
+    | "bomber"
+    | "socks"
+    | "bag"
+    | "wraps"
+    | "longsleeve"
+    | "cargo";
+}
+
+export interface CartItem {
+  product: Product;
+  size: string;
+  quantity: number;
+}
+
+export interface OrderItem {
+  id: string;
+  name: string;
+  size: string;
+  qty: number;
+  price: number;
+}
+
+export interface Contact {
+  phone: string;
+  name?: string;
+  email?: string;
+}
+
+export function parsePrice(priceStr: string): number {
+  return parseInt(priceStr.replace(/[^\d]/g, ""), 10) || 0;
+}
+
+export function formatPrice(amount: number): string {
+  return amount.toLocaleString("ru-RU") + " ₽";
+}

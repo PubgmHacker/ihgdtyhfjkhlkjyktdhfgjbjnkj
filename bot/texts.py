@@ -40,19 +40,14 @@ def info_menu() -> str:
     )
 
 
-def support_menu() -> str:
-    return (
-        "SOULDAWN · Поддержка\n\n"
-        "Задай вопрос AI или напиши оператору."
-    )
-
-
 def links_menu() -> str:
     return (
         "SOULDAWN · Ссылки\n\n"
-        "souldawn.com — сайт\n"
-        "@souldawn — Instagram\n"
-        "@souldawn_support — Telegram\n\n"
+        "🌐  Сайт: souldawn.com\n"
+        "📷  Instagram: @souldawnclothes\n"
+        "🎵  TikTok: @souldawnclothes\n"
+        "✈️  Telegram: @souldawnclothes\n"
+        "📺  YouTube: @souldawnclothes\n\n"
         "Поддержка работает ежедневно 10:00–19:00."
     )
 
@@ -78,23 +73,21 @@ def reviews_text() -> str:
 def faq_delivery() -> str:
     return (
         "SOULDAWN · Доставка\n\n"
-        "СДЭК — от 350₽, 2–5 дней\n"
-        "Почта — от 250₽, 5–10 дней\n"
-        "Яндекс — от 300₽, 1–3 дня\n"
-        "EMS — от 1500₽, 7–14 дней\n\n"
-        "Бесплатно при заказе от 5 000₽."
+        "СДЭК ПВЗ (пункт выдачи) — от 250₽, 2–5 рабочих дней\n"
+        "СДЭК Курьер (до двери) — до 450₽, 2–5 рабочих дней\n"
+        "Почта России — 7–14 рабочих дней\n\n"
+        "Стоимость рассчитывается автоматически при оформлении заказа."
     )
 
 
 def faq_returns() -> str:
     return (
         "SOULDAWN · Возврат\n\n"
-        "14 дней на возврат.\n"
-        "Товар без признаков использования, с бирками.\n\n"
-        "1. Напиши номер заказа\n"
-        "2. Согласуем возврат\n"
-        "3. Отправь товар\n"
-        "4. Деньги возвращаются за 3–5 дней"
+        "14 дней на возврат с момента получения.\n"
+        "Товар должен быть с бирками, без следов носки.\n\n"
+        "1. Напиши нам в Telegram-бот или на почту\n"
+        "2. Согласуем детали возврата\n"
+        "3. Мы организуем возврат через СДЭК за наш счёт"
     )
 
 
@@ -112,10 +105,10 @@ def faq_sizes() -> str:
 def faq_payment() -> str:
     return (
         "SOULDAWN · Оплата\n\n"
+        "Онлайн на сайте (банковская карта).\n"
         "Visa / MasterCard / МИР\n"
-        "СБП\n"
-        "YooKassa\n\n"
-        "Все платежи защищены."
+        "СБП (Система быстрых платежей)\n\n"
+        "Все платежи защищены через YooKassa."
     )
 
 
@@ -131,66 +124,15 @@ def faq_quality() -> str:
 def faq_contact() -> str:
     return (
         "SOULDAWN · Контакты\n\n"
-        "@souldawn_support — Telegram\n"
-        "support@souldawn.com — почта\n"
-        "souldawn.com — сайт\n\n"
-        "Пн–Пт 10:00–19:00"
+        "📱  Telegram: @souldawnsupport_bot\n"
+        "📧  Почта: hello@souldawn.com\n"
+        "🌐  Сайт: souldawn.com\n\n"
+        "Ежедневно 10:00–19:00"
     )
-
-
-def operator_ask() -> str:
-    return (
-        "SOULDAWN · Поддержка\n\n"
-        "Напиши свой вопрос — мы перешлём оператору.\n"
-        "Ответ в течение 1 часа.\n\n"
-        "/start — отмена"
-    )
-
-
-def confirm_send(text: str) -> str:
-    p = text[:200] + ("..." if len(text) > 200 else "")
-    return (
-        f"SOULDAWN · Твоё сообщение:\n\n"
-        f"«{p}»\n\n"
-        f"Отправить оператору?"
-    )
-
-
-def sent_ok() -> str:
-    return "Отправлено. Оператор ответит в ближайшее время."
-
-
-def sent_fail() -> str:
-    return "Не удалось отправить. Попробуй позже."
-
-
-def offline() -> str:
-    return "Оператор не на связи. Попробуй позже."
 
 
 def order_cmd() -> str:
-    return "Напиши @souldawn_support для связи по заказу."
-
-
-def ai_ask_text() -> str:
-    return (
-        "SOULDAWN · AI-ассистент\n\n"
-        "Напиши вопрос — AI ответит мгновенно.\n"
-        "Помогает с товарами, размерами, доставкой.\n\n"
-        "/start — отмена"
-    )
-
-
-def ai_answer(q: str, a: str) -> str:
-    return f"Вопрос: {q}\n\nОтвет: {a}\n\nПомог?"
-
-
-def ai_handoff(q: str) -> str:
-    return (
-        f"SOULDAWN · Нужен оператор\n\n"
-        f"«{q[:200]}»\n\n"
-        f"Передаём оператору..."
-    )
+    return "Напиши @souldawnsupport_bot для связи по заказу."
 
 
 def pay_pending_text(total_kopecks: int, items_count: int) -> str:

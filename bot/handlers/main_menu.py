@@ -13,11 +13,11 @@ from config import MINIAPP_URL, SITE_URL
 from database import get_or_create_user
 from utils import BANNERS
 from texts import (
-    welcome, catalog_menu, info_menu, support_menu, links_menu,
+    welcome, catalog_menu, info_menu, links_menu,
     faq_delivery, faq_returns, faq_sizes, faq_payment, faq_quality,
     faq_contact, order_cmd,
 )
-from keyboards import info_kb, main_kb, faq_menu_kb, faq_article_kb, support_kb, back_kb, FAQ_ITEMS
+from keyboards import info_kb, main_kb, faq_menu_kb, faq_article_kb, back_kb, FAQ_ITEMS
 
 router = Router()
 
@@ -105,13 +105,6 @@ async def on_faq_menu(callback: CallbackQuery):
     await callback.answer()
 
 
-
-@router.callback_query(F.data == "menu:support")
-async def on_support(callback: CallbackQuery):
-    await _edit(callback, "support", support_menu(), support_kb())
-    await callback.answer()
-
-
 @router.callback_query(F.data == "menu:links")
 async def on_links(callback: CallbackQuery):
     await _edit(callback, "links", links_menu(), back_kb())
@@ -125,7 +118,6 @@ async def on_order(callback: CallbackQuery):
 
 
 # ── FAQ статьи ──
-# Ключ → (функция-текст, баннер)
 FAQ_HANDLERS: dict[str, tuple] = {
     "delivery": (faq_delivery, "delivery"),
     "returns":  (faq_returns,  "returns"),

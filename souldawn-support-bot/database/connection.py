@@ -32,7 +32,11 @@ def _log(msg: str) -> None:
 # ======================== INIT ========================
 
 async def init_db() -> None:
-    """Create engine, session factory, and ALL tables via direct SQL. Bulletproof."""
+    """Create engine + session factory. Test connection.
+
+    Tables are created and migrated by Prisma (web service) — the bot does NOT
+    create/modify schema. This avoids conflicts with the Prisma-managed schema.
+    """
     global engine, async_session_factory
 
     _log("=" * 60)
@@ -75,114 +79,8 @@ async def init_db() -> None:
             row = result.fetchone()
             _log(f"--> Step 3 OK: SELECT 1 returned {row}")
 
-        # -- Step 4: Create tables one by one --
-        _log("--> Step 4: Creating tables...")
-
-        TABLES = [
-            ("users", """
-                CREATE TABLE IF NOT EXISTS users (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    telegram_id BIGINT UNIQUE NOT NULL,
-                    username VARCHAR(255) DEFAULT '',
-                    full_name VARCHAR(255) DEFAULT '',
-                    is_active BOOLEAN DEFAULT TRUE,
-                    is_admin BOOLEAN DEFAULT FALSE,
-                    notify_new_drops BOOLEAN DEFAULT TRUE,
-                    notify_promos BOOLEAN DEFAULT TRUE,
-                    last_seen TIMESTAMPTZ DEFAULT NOW(),
-                    site_sessions INTEGER DEFAULT 0,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("carts", """
-                CREATE TABLE IF NOT EXISTS carts (
-                    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                    items JSONB DEFAULT '[]'::jsonb,
-                    updated_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("orders", """
-                CREATE TABLE IF NOT EXISTS orders (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    user_id UUID REFERENCES users(id),
-                    items JSONB NOT NULL,
-                    total INTEGER NOT NULL,
-                    status VARCHAR(50) DEFAULT 'pending',
-                    yookassa_id VARCHAR(255),
-                    contact JSONB,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("broadcasts", """
-                CREATE TABLE IF NOT EXISTS broadcasts (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    text TEXT NOT NULL,
-                    target VARCHAR(50) DEFAULT 'all',
-                    sent_at TIMESTAMPTZ,
-                    sent_count INTEGER DEFAULT 0
-                );
-            """),
-            ("expenses", """
-                CREATE TABLE IF NOT EXISTS expenses (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    category VARCHAR(100) DEFAULT 'other',
-                    description VARCHAR(255) DEFAULT '',
-                    amount INTEGER DEFAULT 0,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("miniapps", """
-                CREATE TABLE IF NOT EXISTS miniapps (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    name VARCHAR(255) NOT NULL,
-                    description TEXT DEFAULT '',
-                    url TEXT NOT NULL,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("action_logs", """
-                CREATE TABLE IF NOT EXISTS action_logs (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    user_id BIGINT NOT NULL,
-                    action_type TEXT NOT NULL,
-                    target_id VARCHAR(255) DEFAULT '',
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-            ("support_tickets", """
-                CREATE TABLE IF NOT EXISTS support_tickets (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    user_id BIGINT NOT NULL,
-                    admin_messages JSONB DEFAULT '[]'::jsonb,
-                    original_text TEXT DEFAULT '',
-                    status VARCHAR(50) DEFAULT 'open',
-                    accepted_by BIGINT,
-                    admin_name VARCHAR(255) DEFAULT '',
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-            """),
-        ]
-
-        created_tables = []
-        failed_tables = []
-
-        for table_name, sql in TABLES:
-            _log(f"--> Создаю таблицу {table_name}...")
-            try:
-                async with engine.begin() as conn:
-                    await conn.execute(text(sql))
-                created_tables.append(table_name)
-                _log(f"--> {table_name}: OK")
-            except Exception as e:
-                failed_tables.append(table_name)
-                _log(f"--> {table_name}: FAILED — {type(e).__name__}: {e}")
-                traceback.print_exc()
-
-        _log(f"--> Step 4 DONE: created={len(created_tables)}, failed={len(failed_tables)}")
-
-        # -- Step 5: Verify tables exist in PostgreSQL --
-        _log("--> Step 5: Verifying tables in PostgreSQL...")
+        # -- Step 4: Verify expected tables exist (managed by Prisma) --
+        _log("--> Step 4: Verifying Prisma-managed tables exist...")
         async with engine.connect() as conn:
             result = await conn.run_sync(
                 lambda sync_conn: sync_conn.execute(
@@ -192,19 +90,17 @@ async def init_db() -> None:
             )
             existing_tables = [row[0] for row in result]
 
-        _log(f"--> Step 5 OK: tables in DB = {existing_tables}")
+        _log(f"--> Step 4 OK: {len(existing_tables)} tables in DB: {existing_tables}")
 
-        # -- Step 6: Final status --
+        # -- Final status --
         _log("=" * 60)
-        _log(f">>> init_db() COMPLETE")
-        _log(f">>> CREATED: {created_tables}")
-        _log(f">>> FAILED:  {failed_tables}")
-        _log(f">>> EXISTING IN DB: {existing_tables}")
+        _log(f">>> init_db() COMPLETE — connected to shared DB")
+        _log(f">>> Tables (Prisma-managed): {existing_tables}")
         _log("=" * 60)
 
     except Exception as e:
         _log("=" * 60)
-        _log("!!! КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ БД !!!")
+        _log("!!! DB CONNECTION ERROR !!!")
         _log(f"!!! {type(e).__name__}: {e} !!!")
         traceback.print_exc()
         _log("=" * 60)

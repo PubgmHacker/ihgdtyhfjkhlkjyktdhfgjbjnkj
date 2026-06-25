@@ -20,14 +20,21 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    telegram_id = Column(BigInteger, unique=True, nullable=False)
+    telegram_id = Column(BigInteger, unique=True, nullable=True)  # nullable: email-only users
     username = Column(String, default="")
     full_name = Column(String, default="")
+    email = Column(String, unique=True, nullable=True)
+    password_hash = Column(String, nullable=True)
+    role = Column(String, default="user")
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
     notify_new_drops = Column(Boolean, default=True)
     notify_promos = Column(Boolean, default=True)
+    notify_email = Column(Boolean, default=False)
+    email_verified = Column(Boolean, default=False)
+    last_login = Column(DateTime(timezone=True), nullable=True)
     last_seen = Column(DateTime(timezone=True), server_default=func.now())
+    profile_data = Column(JSON, nullable=True)
     site_sessions = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -54,8 +61,12 @@ class Order(Base):
     items = Column(JSON, nullable=False)
     total = Column(Integer, nullable=False)
     status = Column(String, default="pending")
-    yookassa_id = Column(String, nullable=True)
+    yookassa_id = Column(String, nullable=True, unique=True)
     contact = Column(JSON, nullable=True)
+    promo_code = Column(String, nullable=True)
+    stock_applied = Column(Boolean, default=False)
+    tracking_number = Column(String, nullable=True)
+    tracking_carrier = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="orders")

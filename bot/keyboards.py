@@ -1,5 +1,4 @@
 from __future__ import annotations
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 """SOULDAWN — All keyboard builders."""
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
@@ -11,14 +10,9 @@ from utils import _fmt_price
 def main_kb() -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
 
-    # Кнопка каталога (WebApp) — главный CTA, отдельной широкой строкой.
-    # Показываем только при заданном MINIAPP_URL — иначе Telegram
-    # отклоняет всю клавиатуру (Web App URL host is empty).
     if MINIAPP_URL:
         rows.append([InlineKeyboardButton(text="🛍️  МАГАЗИН", web_app=WebAppInfo(url=MINIAPP_URL))])
 
-    # Кнопка Сайт (url) только при заданном SITE_URL — иначе пустой url
-    # делает кнопку невалидной (Text buttons are unallowed).
     info_row = []
     if SITE_URL:
         info_row.append(InlineKeyboardButton(text="🌐  Сайт", url=SITE_URL))
@@ -26,7 +20,7 @@ def main_kb() -> InlineKeyboardMarkup:
     rows.append(info_row)
 
     rows.append([
-        InlineKeyboardButton(text="💬  Поддержка", callback_data="menu:support"),
+        InlineKeyboardButton(text="💬  Поддержка", url="https://t.me/souldawnsupport_bot"),
         InlineKeyboardButton(text="🔗  Ссылки", callback_data="menu:links"),
     ])
 
@@ -34,8 +28,6 @@ def main_kb() -> InlineKeyboardMarkup:
 
 
 def admin_panel_kb() -> InlineKeyboardMarkup:
-    """Инлайн админ-панель (вызывается по /admin). WebApp-кнопка —
-    только при заданном MINIAPP_URL, иначе Telegram отклоняет клавиатуру."""
     rows: list[list[InlineKeyboardButton]] = [
         [
             InlineKeyboardButton(text="📊  Статистика", callback_data="admin:stats"),
@@ -61,15 +53,12 @@ def admin_panel_kb() -> InlineKeyboardMarkup:
 
 
 def admin_back_kb() -> InlineKeyboardMarkup:
-    """Кнопка «Назад» в корень админ-панели."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="←  К панели", callback_data="admin:home")]
     ])
 
 
 def shop_or_menu_kb() -> InlineKeyboardMarkup:
-    """Клавиатура после оплаты/заказа. Кнопка SHOP (WebApp) — только
-    при заданном MINIAPP_URL, иначе Telegram отклоняет клавиатуру."""
     rows: list[list[InlineKeyboardButton]] = []
     if MINIAPP_URL:
         rows.append([InlineKeyboardButton(text="SHOP", web_app=WebAppInfo(url=MINIAPP_URL))])
@@ -95,37 +84,9 @@ def info_kb() -> InlineKeyboardMarkup:
     ])
 
 
-def support_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="🤖  AI-ассистент", callback_data="ai:ask"),
-            InlineKeyboardButton(text="💬  Оператор", callback_data="operator"),
-        ],
-        [
-            InlineKeyboardButton(text="📦  Мой заказ", callback_data="order"),
-            InlineKeyboardButton(text="📞  Контакты", callback_data="faq:contact"),
-        ],
-        [InlineKeyboardButton(text="←  Назад", callback_data="back_to_menu")],
-    ])
-
-
 def back_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="←  Назад", callback_data="back_to_menu")]
-    ])
-
-
-def operator_confirm_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅  Отправить", callback_data="confirm_operator")],
-        [InlineKeyboardButton(text="❌  Отмена", callback_data="back_to_menu")],
-    ])
-
-
-def ai_helpful_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅  Спасибо!", callback_data="ai:thanks")],
-        [InlineKeyboardButton(text="💬  Оператор", callback_data="operator")],
     ])
 
 
@@ -154,7 +115,7 @@ def _stats_main_kb() -> InlineKeyboardMarkup:
     ])
 
 
-# ======================== ВОССТАНОВЛЕННЫЙ БЛОК FAQ ========================
+# ======================== FAQ ========================
 FAQ_ITEMS = {
     "delivery": "📦 Доставка",
     "returns": "🔄 Возврат",
@@ -163,14 +124,3 @@ FAQ_ITEMS = {
     "quality": "💎 Качество",
     "contact": "📱 Контакты"
 }
-
-def faq_menu_kb() -> InlineKeyboardMarkup:
-    for key, text in FAQ_ITEMS.items():
-        builder.row(InlineKeyboardButton(text=text, callback_data=f"faq:{key}"))
-    builder.row(InlineKeyboardButton(text="← Назад", callback_data="back_to_menu"))
-    return builder.as_markup()
-
-def faq_article_kb(current_key: str) -> InlineKeyboardMarkup:
-    builder.row(InlineKeyboardButton(text="← К списку FAQ", callback_data="menu:faq"))
-    builder.row(InlineKeyboardButton(text="🏠 В главное меню", callback_data="back_to_menu"))
-    return builder.as_markup()
