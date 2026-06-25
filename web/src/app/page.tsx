@@ -1,7 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+
+function ViewRedirect() {
+  const params = useSearchParams();
+  const router = useRouter();
+  useEffect(() => {
+    const v = params.get("view");
+    if (v === "admin") router.replace("/admin");
+    if (v === "faq") router.replace("/faq");
+  }, [params, router]);
+  return null;
+}
 import HeroSection from "@/components/HeroSection";
 import CollectionShowcase from "@/components/CollectionShowcase";
 import ManifestoSection from "@/components/ManifestoSection";
@@ -32,6 +44,7 @@ export default function Home() {
 
   return (
     <>
+      <Suspense><ViewRedirect /></Suspense>
       <HeroSection />
       <ScrollSection>
         <CollectionShowcase onProductClick={setSelectedProduct} />
