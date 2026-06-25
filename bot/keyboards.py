@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
-from config import MINIAPP_URL, SITE_URL
+from config import MINIAPP_URL
 from utils import _fmt_price
 
 
@@ -14,11 +14,6 @@ def main_kb() -> InlineKeyboardMarkup:
         rows.append([InlineKeyboardButton(text="🛍️  МАГАЗИН", web_app=WebAppInfo(url=MINIAPP_URL))])
         rows.append([InlineKeyboardButton(text="❓ FAQ", web_app=WebAppInfo(url=f"{MINIAPP_URL}/faq"))])
 
-    info_row = []
-    if SITE_URL:
-        info_row.append(InlineKeyboardButton(text="🌐  Сайт", url=SITE_URL))
-    info_row.append(InlineKeyboardButton(text="❓  FAQ", callback_data="menu:info"))
-    rows.append(info_row)
 
     rows.append([
         InlineKeyboardButton(text="💬  Поддержка", url="https://t.me/souldawnsupport_bot"),
