@@ -116,15 +116,6 @@ def _stats_main_kb() -> InlineKeyboardMarkup:
 
 
 # ======================== FAQ ========================
-FAQ_ITEMS = {
-    "delivery": "📦 Доставка",
-    "returns": "🔄 Возврат",
-    "sizes": "📐 Размеры",
-    "payment": "💳 Оплата",
-    "quality": "💎 Качество",
-    "contact": "📱 Контакты"
-}
-
 # ======================== FAQ KEYBOARDS ========================
 FAQ_ITEMS = {
     "delivery": "📦 Доставка",
