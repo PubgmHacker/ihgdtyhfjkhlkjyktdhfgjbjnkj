@@ -4,6 +4,31 @@ import { signAccessToken, signRefreshToken, cookieOptions, ACCESS_MAX_AGE, REFRE
 import { linkOrCreateUser } from "@/lib/user-service";
 import { db } from "@/lib/db";
 
+/** Parse ADMIN_IDS env var (comma-separated TG IDs) into a Set of numbers. */
+function parseAdminIds(): Set<number> {
+  const raw = process.env.ADMIN_IDS || "";
+  if (!raw.trim()) return new Set();
+  return new Set(
+    raw.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
+  );
+}
+
+/** If the user's telegram_id is in ADMIN_IDS, ensure their role is "owner". */
+async function ensureAdminRole(userId: string, telegramId: number | null): Promise<void> {
+  if (!telegramId) return;
+  const adminIds = parseAdminIds();
+  if (adminIds.size === 0) return;
+  if (adminIds.has(telegramId)) {
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (user && user.role !== "owner") {
+      await db.user.update({
+        where: { id: userId },
+        data: { role: "owner", isAdmin: true },
+      });
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { initData } = await request.json();
@@ -40,8 +65,31 @@ export async function POST(request: NextRequest) {
       photoUrl: tgUser.photo_url || "",
     });
 
+    // Promote to owner if TG ID is in ADMIN_IDS
+    await ensureAdminRole(user.id, tgUser.id);
+
+    // Re-fetch user to get updated role
+    const updatedUser = await db.user.findUnique({ where: { id: user.id } });
+    const profile = updatedUser?.profileData ? JSON.parse(updatedUser.profileData) : {};
+
+    const publicUser = {
+      id: updatedUser!.id,
+      telegram_id: updatedUser!.telegramId ?? null,
+      username: updatedUser!.username || "",
+      name: updatedUser!.fullName || "",
+      photo_url: profile.photo_url || null,
+      email: updatedUser!.email || null,
+      role: updatedUser!.role,
+      is_admin: updatedUser!.role === "admin" || updatedUser!.role === "owner" || !!updatedUser!.isAdmin,
+      notify_new_drops: !!updatedUser!.notifyNewDrops,
+      notify_promos: !!updatedUser!.notifyPromos,
+      email_verified: false,
+      created_at: updatedUser!.createdAt ? new Date(updatedUser!.createdAt).toISOString() : null,
+      last_login: updatedUser!.lastLogin ? new Date(updatedUser!.lastLogin).toISOString() : null,
+    };
+
     // Store full TG session data — skip for admin users
-    if (!user.isAdmin && user.role !== "admin" && user.role !== "owner") {
+    if (!publicUser.is_admin) {
       await db.tgSession.create({
         data: {
           userId: user.id,
@@ -54,13 +102,13 @@ export async function POST(request: NextRequest) {
 
     const tokenPayload = {
       userId: user.id,
-      telegram_id: user.telegram_id || undefined,
-      role: user.role,
+      telegram_id: updatedUser!.telegramId || undefined,
+      role: updatedUser!.role,
     };
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    const response = NextResponse.json({ success: true, user, token: accessToken });
+    const response = NextResponse.json({ success: true, user: publicUser, token: accessToken });
     response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, cookieOptions(ACCESS_MAX_AGE));
     response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions(REFRESH_MAX_AGE));
     return response;

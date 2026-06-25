@@ -3,6 +3,31 @@ import { verifyPassword, signAccessToken, signRefreshToken, cookieOptions, ACCES
 import { linkOrCreateUser, findEmailIdentity } from "@/lib/user-service";
 import { db } from "@/lib/db";
 
+/** Parse ADMIN_IDS env var (comma-separated TG IDs) into a Set of numbers. */
+function parseAdminIds(): Set<number> {
+  const raw = process.env.ADMIN_IDS || "";
+  if (!raw.trim()) return new Set();
+  return new Set(
+    raw.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
+  );
+}
+
+/** If the user's telegram_id is in ADMIN_IDS, ensure their role is "owner". */
+async function ensureAdminRole(userId: string, telegramId: number | null): Promise<void> {
+  if (!telegramId) return;
+  const adminIds = parseAdminIds();
+  if (adminIds.size === 0) return;
+  if (adminIds.has(telegramId)) {
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (user && user.role !== "owner") {
+      await db.user.update({
+        where: { id: userId },
+        data: { role: "owner", isAdmin: true },
+      });
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -16,6 +41,8 @@ export async function POST(request: NextRequest) {
         username: username || undefined,
         fullName: name || undefined,
       });
+      // Promote to owner if TG ID is in ADMIN_IDS
+      await ensureAdminRole(pub.id, telegram_id);
       user = await db.user.findUnique({ where: { id: pub.id } });
       if (!user?.isActive) {
         return NextResponse.json({ error: "Аккаунт заблокирован" }, { status: 403 });

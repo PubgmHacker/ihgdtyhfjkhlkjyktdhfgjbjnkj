@@ -1,7 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser, isAdminRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export async function GET() {
+// GET /api/admin/orders — list all orders
+export async function GET(request: NextRequest) {
+  const auth = await getAuthUser(request);
+  if (!auth || !auth.isAdmin) return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
+
   try {
     const orders = await db.order.findMany({
       orderBy: { createdAt: "desc" },
@@ -15,7 +20,11 @@ export async function GET() {
   }
 }
 
-export async function PATCH(req: Request) {
+// PATCH /api/admin/orders — update order status/tracking
+export async function PATCH(req: NextRequest) {
+  const auth = await getAuthUser(req);
+  if (!auth || !auth.isAdmin) return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
+
   try {
     const body = await req.json();
     const { id, status, trackingCode } = body;
