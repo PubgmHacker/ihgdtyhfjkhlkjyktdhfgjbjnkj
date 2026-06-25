@@ -96,13 +96,28 @@ async def on_back(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.in_({"menu:info", "menu:faq"}))
 async def on_faq_menu(callback: CallbackQuery):
-    """Главное меню FAQ — список статей."""
-    text = (
-        "📋  <b>FAQ — Частые вопросы</b>\n\n"
-        "Выберите интересующую вас тему ниже, чтобы узнать подробности:"
-    )
-    await _edit(callback, "info", text, info_kb())
+    """FAQ carousel — show first page."""
+    await _show_faq_page(callback, 0)
     await callback.answer()
+
+
+@router.callback_query(F.data.startswith("faq_page:"))
+async def on_faq_page(callback: CallbackQuery):
+    page = int(callback.data.split(":")[1])
+    await _show_faq_page(callback, page)
+    await callback.answer()
+
+
+async def _show_faq_page(callback: CallbackQuery, page: int) -> None:
+    total = len(FAQ_PAGES)
+    page = max(0, min(page, total - 1))
+    key, title = FAQ_PAGES[page]
+    entry = FAQ_HANDLERS.get(key)
+    if not entry:
+        return
+    fn, banner = entry
+    text = f"📋  <b>{title}</b>  ({page + 1}/{total})\n\n{fn()}"
+    await _edit(callback, banner, text, faq_carousel_kb(page, total))
 
 
 @router.callback_query(F.data == "menu:links")
@@ -143,16 +158,7 @@ FAQ_HANDLERS: dict[str, tuple] = {
 }
 
 
-@router.callback_query(F.data.startswith("faq:"))
-async def on_faq(callback: CallbackQuery):
-    key = callback.data.split(":", 1)[1]
-    entry = FAQ_HANDLERS.get(key)
-    if not entry:
-        await callback.answer()
-        return
-    fn, banner = entry
-    await _edit(callback, banner, fn(), faq_article_kb(key))
-    await callback.answer()
+# old on_faq removed (carousel replaces it)
 
 
 # ── Errors ──
