@@ -1,43 +1,72 @@
-# ---------- Secrets / env (никогда не коммитим) ----------
-.env
-.env.*
-!.env.example
-!.env.local.example
+# ---------- Godot 4 ----------
+# Godot generates this directory on first editor open — fully regenerable
+.godot/
+*.translation
+.editor/
 
-# ---------- Node / Next.js (web/) ----------
-**/node_modules/
-**/.next/
-**/out/
-**/build/
-**/.pnp
-**/.pnp.js
-**/coverage/
-**/*.tsbuildinfo
-**/next-env.d.ts
-**/npm-debug.log*
-**/yarn-debug.log*
-**/yarn-error.log*
+# ---------- C# / .NET ----------
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# ---------- Python (bot/) ----------
-**/venv/
-**/__pycache__/
-**/*.pyc
-**/*.pyo
-**/.pytest_cache/
-**/.mypy_cache/
-**/.ruff_cache/
+# .NET / C# project files
+*.csproj.user
+*.sln.docstates
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.bootfile
+*.swp
+*.*~
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Mono / .NET runtime generated
+.mono/
+data_*/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
 
 # ---------- OS / editor ----------
 .DS_Store
 Thumbs.db
 *.pem
-*.swp
-.idea/
-.vscode/
+desktop.ini
 
-# ---------- misc local scripts ----------
-push.sh
-setup.sh
-check_sources.py
-find_proxy.py
-test_connection.py
+# ---------- Game builds ----------
+*.exe
+*.app
+*.x86_64
+*.pck
+Export/
+export/
+builds/
+
+# ---------- Secrets ----------
+.env
+.env.*
+!.env.example

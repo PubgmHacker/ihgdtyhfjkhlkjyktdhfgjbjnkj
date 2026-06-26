@@ -1,0 +1,66 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "MegabonkLauncher-arm64-apple-macosx-release.exe": ["<MegabonkLauncher-arm64-apple-macosx-release.exe>"]
+  "MegabonkLauncher-arm64-apple-macosx-release.module": ["<MegabonkLauncher-arm64-apple-macosx-release.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<MegabonkLauncher-arm64-apple-macosx-release.exe>","<MegabonkLauncher-arm64-apple-macosx-release.module>"]
+  "test": ["<MegabonkLauncher-arm64-apple-macosx-release.exe>","<MegabonkLauncher-arm64-apple-macosx-release.module>"]
+default: "main"
+nodes:
+  "/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/App.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Colors.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/ContentView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/GameLauncher.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/SettingsStore.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/BackgroundView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/MainMenuView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/NewsView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/PlayButton.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/SettingsView.swift"]
+    outputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/sources"]
+    description: "Write auxiliary file /Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/sources"
+
+  "/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/App.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/BackgroundView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/Colors.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/ContentView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/GameLauncher.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/MainMenuView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/NewsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/PlayButton.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsStore.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsView.swift.o"]
+    outputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.product/Objects.LinkFileList"
+
+  "/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<MegabonkLauncher-arm64-apple-macosx-release.exe>":
+    tool: phony
+    inputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher"]
+    outputs: ["<MegabonkLauncher-arm64-apple-macosx-release.exe>"]
+
+  "<MegabonkLauncher-arm64-apple-macosx-release.module>":
+    tool: phony
+    inputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/App.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/Colors.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/ContentView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/GameLauncher.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsStore.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/BackgroundView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/MainMenuView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/NewsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/PlayButton.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/Modules/MegabonkLauncher.swiftmodule"]
+    outputs: ["<MegabonkLauncher-arm64-apple-macosx-release.module>"]
+
+  "C.MegabonkLauncher-arm64-apple-macosx-release.exe":
+    tool: shell
+    inputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/App.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/BackgroundView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/Colors.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/ContentView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/GameLauncher.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/MainMenuView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/NewsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/PlayButton.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsStore.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.product/Objects.LinkFileList"]
+    outputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher"]
+    description: "Linking ./.build/arm64-apple-macosx/release/MegabonkLauncher"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-L","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release","-o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher","-module-name","MegabonkLauncher","-Xlinker","-no_warn_duplicate_libraries","-emit-executable","-Xlinker","-dead_strip","-Xlinker","-alias","-Xlinker","_MegabonkLauncher_main","-Xlinker","_main","-Xlinker","-rpath","-Xlinker","@loader_path","@/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.product/Objects.LinkFileList","-Xlinker","-rpath","-Xlinker","/Library/Developer/CommandLineTools/usr/lib/swift-6.2/macosx","-target","arm64-apple-macosx13.0","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g"]
+
+  "C.MegabonkLauncher-arm64-apple-macosx-release.module":
+    tool: shell
+    inputs: ["/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/App.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Colors.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/ContentView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/GameLauncher.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/SettingsStore.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/BackgroundView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/MainMenuView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/NewsView.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/PlayButton.swift","/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/Views/SettingsView.swift","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/sources"]
+    outputs: ["/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/App.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/Colors.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/ContentView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/GameLauncher.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsStore.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/BackgroundView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/MainMenuView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/NewsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/PlayButton.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/SettingsView.swift.o","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/Modules/MegabonkLauncher.swiftmodule"]
+    description: "Compiling Swift Module 'MegabonkLauncher' (10 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","MegabonkLauncher","-emit-dependencies","-emit-module","-emit-module-path","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/Modules/MegabonkLauncher.swiftmodule","-output-file-map","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/output-file-map.json","-whole-module-optimization","-num-threads","10","-c","@/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/MegabonkLauncher.build/sources","-I","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/Modules","-target","arm64-apple-macosx13.0","-whole-module-optimization","-num-threads","10","-serialize-diagnostics","-O","-j10","-DSWIFT_PACKAGE","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/hellcart/ZCodeProject/launcher/.build/arm64-apple-macosx/release/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","MegabonkLauncher_main","-swift-version","5","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","launcher"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/hellcart/ZCodeProject/launcher/Sources/MegabonkLauncher/","/Users/hellcart/ZCodeProject/launcher/Package.swift","/Users/hellcart/ZCodeProject/launcher/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

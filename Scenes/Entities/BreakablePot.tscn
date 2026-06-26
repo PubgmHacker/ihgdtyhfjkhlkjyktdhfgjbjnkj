@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3 uid="uid://breakable_pot_001"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/BreakablePot.cs" id="1"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.35
+bottom_radius = 0.5
+height = 0.9
+radial_segments = 8
+rings = 2
+
+[sub_resource type="StandardMaterial3D" id="pot_mat"]
+albedo_color = Color(0.2, 0.35, 0.55, 1)
+emission_enabled = true
+emission = Color(0.15, 0.25, 0.4, 1)
+emission_energy_multiplier = 0.3
+metallic = 0.6
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="pot_hit_mat"]
+albedo_color = Color(1, 0.9, 0.5, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.3, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_1"]
+height = 0.9
+radius = 0.5
+
+[node name="BreakablePot" type="StaticBody3D"]
+script = ExtResource("1")
+PotMesh = NodePath("Mesh")
+BaseMaterial = SubResource("pot_mat")
+HitMaterial = SubResource("pot_hit_mat")
+XPDrop = 3
+GoldDrop = 1
+SilverCoinChance = 8
+GoldChance = 50
+MaxHealth = 15.0
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("CylinderMesh_1")
+material_override = SubResource("pot_mat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("CylinderShape_1")
+
+[node name="OmniLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+light_color = Color(0.3, 0.5, 0.7)
+light_energy = 0.8
+light_distance = 2.0
+shadow_enabled = false

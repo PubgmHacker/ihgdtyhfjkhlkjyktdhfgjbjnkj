@@ -1,0 +1,76 @@
+[gd_scene load_steps=13 format=3 uid="uid://main_scene_001"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Entities/Player.tscn" id="1"]
+[ext_resource type="Script" path="res://Scripts/Core/CameraController.cs" id="2"]
+[ext_resource type="Script" path="res://Scripts/Core/EnemyController.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/Generation/LevelGenerator.cs" id="4"]
+[ext_resource type="Script" path="res://Scripts/Generation/WaveManager.cs" id="5"]
+[ext_resource type="Script" path="res://Scripts/Systems/UpgradeSystem.cs" id="6"]
+[ext_resource type="Script" path="res://Scripts/Effects/FloatingTextManager.cs" id="7"]
+[ext_resource type="Script" path="res://Scripts/UI/HudController.cs" id="8"]
+[ext_resource type="Script" path="res://Scripts/Core/SceneWire.cs" id="9"]
+[ext_resource type="Script" path="res://Scripts/UI/LevelUpDraftUI.cs" id="10"]
+
+[node name="Main" type="Node3D"]
+
+[node name="LevelGenerator" type="Node3D" parent="."]
+script = ExtResource("4")
+GridSize = 50
+TileSize = 2.0
+WallHeight = 3.0
+WallThickness = 0.5
+Seed = 42
+
+[node name="Player" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 22, 14)
+script = ExtResource("2")
+Offset = Vector3(0, 22, 14)
+FollowLerp = 6.0
+MinZoom = 12.0
+MaxZoom = 32.0
+ZoomStep = 2.0
+ZoomLerp = 8.0
+current = true
+
+[node name="EnemyController" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="WaveManager" type="Node" parent="."]
+script = ExtResource("5")
+FirstWaveDelay = 2.0
+AutoAdvance = true
+AroundPlayerRadius = Vector2(15, 25)
+
+[node name="UpgradeSystem" type="Node" parent="."]
+script = ExtResource("6")
+DraftSize = 3
+
+[node name="SceneWire" type="Node" parent="."]
+script = ExtResource("9")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="FloatingTextManager" type="Node" parent="CanvasLayer"]
+script = ExtResource("7")
+
+[node name="LevelUpDraftUI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10")
+
+[node name="Hud" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("8")

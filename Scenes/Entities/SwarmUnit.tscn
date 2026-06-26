@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://enemy_swarm_001"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/Enemies/SwarmUnit.cs" id="1"]
+
+[sub_resource type="SphereMesh" id="enemy_mesh"]
+radius = 0.3
+
+[sub_resource type="SphereShape3D" id="enemy_shape"]
+radius = 0.3
+
+[sub_resource type="StandardMaterial3D" id="enemy_mat"]
+albedo_color = Color(0.5, 0.8, 0.2, 1)
+emission_enabled = true
+emission = Color(0.3, 0.5, 0.1, 1)
+emission_energy_multiplier = 0.7
+
+[node name="SwarmUnit" type="CharacterBody3D"]
+script = ExtResource("1")
+MoveSpeed = 7.0
+AttackRange = 1.0
+AttackCooldown = 0.5
+AttackDamage = 4.0
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("enemy_mesh")
+material_override = SubResource("enemy_mat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+shape = SubResource("enemy_shape")

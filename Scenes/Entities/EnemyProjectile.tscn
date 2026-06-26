@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3 uid="uid://enemy_proj_001"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/EnemyProjectile.cs" id="1"]
+
+[sub_resource type="SphereMesh" id="proj_mesh"]
+radius = 0.15
+
+[sub_resource type="SphereShape3D" id="proj_shape"]
+radius = 0.15
+
+[sub_resource type="StandardMaterial3D" id="proj_mat"]
+albedo_color = Color(1, 0.3, 0.3, 1)
+emission_enabled = true
+emission = Color(0.9, 0.15, 0.15, 1)
+emission_energy_multiplier = 1.8
+
+[node name="EnemyProjectile" type="Area3D"]
+script = ExtResource("1")
+Speed = 9.0
+Lifetime = 4.0
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("proj_mesh")
+material_override = SubResource("proj_mat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("proj_shape")

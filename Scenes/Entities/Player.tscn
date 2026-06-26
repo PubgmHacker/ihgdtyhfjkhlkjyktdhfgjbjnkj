@@ -1,0 +1,64 @@
+[gd_scene load_steps=6 format=3 uid="uid://player_scene_001"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/Player.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/Weapons/WeaponManager.cs" id="2"]
+[ext_resource type="Script" path="res://Scripts/Weapons/AutoAxe.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/Weapons/ProjectileGun.cs" id="4"]
+[ext_resource type="Script" path="res://Scripts/Weapons/AuraWeapon.cs" id="5"]
+[ext_resource type="Script" path="res://Scripts/Weapons/BoomerangWeapon.cs" id="6"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
+radius = 0.5
+height = 1.6
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_1"]
+radius = 0.5
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="player_mat"]
+albedo_color = Color(0.2, 0.55, 0.95, 1)
+emission_enabled = true
+emission = Color(0.1, 0.3, 0.7, 1)
+emission_energy_multiplier = 0.4
+
+[sub_resource type="StandardMaterial3D" id="player_hit_mat"]
+albedo_color = Color(1, 0.2, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.4, 0.2, 1)
+emission_energy_multiplier = 1.5
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1")
+BaseSpeed = 8.0
+DashSpeed = 25.0
+DashDuration = 0.15
+DashCooldown = 1.5
+MagnetRadius = 6.0
+BodyMesh = NodePath("BodyMesh")
+HitFlashMaterial = SubResource("player_hit_mat")
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape_1")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("CapsuleMesh_1")
+material_override = SubResource("player_mat")
+
+[node name="WeaponManager" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="AutoAxe" type="Node" parent="WeaponManager"]
+script = ExtResource("3")
+
+[node name="ProjectileGun" type="Node" parent="WeaponManager"]
+script = ExtResource("4")
+
+[node name="AuraWeapon" type="Node" parent="WeaponManager"]
+script = ExtResource("5")
+
+[node name="Boomerang" type="Node" parent="WeaponManager"]
+script = ExtResource("6")
