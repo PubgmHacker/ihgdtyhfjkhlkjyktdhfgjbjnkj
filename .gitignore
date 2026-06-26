@@ -66,6 +66,17 @@ Export/
 export/
 builds/
 
+# ---------- Swift / Xcode build artifacts ----------
+launcher/.build/
+launcher/build/
+launcher/GameEmbed/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+
+# ---------- Godot extension API (auto-generated, regenerable) ----------
+extension_api.json
+
 # ---------- Secrets ----------
 .env
 .env.*
