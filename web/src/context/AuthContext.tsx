@@ -82,11 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const loadMe = useCallback(async (): Promise<boolean> => {
+  const loadMe = useCallback(async (overrideToken?: string | null): Promise<boolean> => {
     try {
+      const hdrs: Record<string, string> = { "Cache-Control": "no-cache" };
+      if (overrideToken) hdrs["Authorization"] = "Bearer " + overrideToken;
       const res = await fetch("/api/auth/me", {
         credentials: "include",
-        headers: { "Cache-Control": "no-cache" },
+        headers: hdrs,
       });
       if (res.ok) {
         const data = await res.json();
@@ -96,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return true;
         }
       }
-    } catch {
-      // Network error — stay unauthenticated
+    } catch (e) {
+      console.error("[loadMe] failed:", e);
     }
     setUser(null);
     setOrders([]);
@@ -120,12 +122,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
               const data = await res.json();
               if (data.success && data.user) {
-                setUser(data.user);
                 if (data.token) setToken(data.token);
+                const verified = await loadMe(data.token);
+                if (!verified) setUser(data.user);
+                return;
               }
+            } else {
+              console.error("[mini-app] response status:", res.status);
             }
+          } else {
+            console.log("[mini-app] no initData available");
           }
-        } catch {}
+        } catch (e) {
+          console.error("[mini-app] auth error:", e);
+        }
       }
       setLoading(false);
     })();
