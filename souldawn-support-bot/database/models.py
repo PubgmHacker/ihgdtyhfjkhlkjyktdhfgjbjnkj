@@ -1,4 +1,9 @@
-"""SOULDAWN — SQLAlchemy ORM models."""
+"""SOULDAWN Support — SQLAlchemy ORM models.
+
+Only columns that actually exist in the shared `users` table.
+The web app manages email/role/etc. via Prisma in `app_users` —
+the bot must NOT add columns that Prisma doesn't know about.
+"""
 from __future__ import annotations
 
 import uuid
@@ -20,21 +25,14 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    telegram_id = Column(BigInteger, unique=True, nullable=True)  # nullable: email-only users
+    telegram_id = Column(BigInteger, unique=True, nullable=False)
     username = Column(String, default="")
     full_name = Column(String, default="")
-    email = Column(String, unique=True, nullable=True)
-    password_hash = Column(String, nullable=True)
-    role = Column(String, default="user")
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
     notify_new_drops = Column(Boolean, default=True)
     notify_promos = Column(Boolean, default=True)
-    notify_email = Column(Boolean, default=False)
-    email_verified = Column(Boolean, default=False)
-    last_login = Column(DateTime(timezone=True), nullable=True)
     last_seen = Column(DateTime(timezone=True), server_default=func.now())
-    profile_data = Column(JSON, nullable=True)
     site_sessions = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
