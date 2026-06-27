@@ -58,10 +58,12 @@ export async function POST(request: NextRequest) {
     const tgUser = JSON.parse(userStr);
 
     // Use linkOrCreateUser to create User + Identity
+    // IMPORTANT: Prisma schema stores telegramId as BigInt — convert explicitly.
+    const tgId = typeof tgUser.id === "number" ? BigInt(tgUser.id) : tgUser.id;
     const user = await linkOrCreateUser("telegram", String(tgUser.id), {
       fullName: [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ").trim(),
       username: tgUser.username || "",
-      telegramId: tgUser.id,
+      telegramId: tgId,
       photoUrl: tgUser.photo_url || "",
     });
 

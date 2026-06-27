@@ -25,7 +25,8 @@ export default function TelegramLogin({ className = "" }: { className?: string }
     script.setAttribute("data-telegram-login", BOT_NAME);
     script.setAttribute("data-size", "large");
     script.setAttribute("data-radius", "0");
-    script.setAttribute("data-request-access", "write");
+    // No data-request-access — login widget defaults to read access.
+    // "write" causes Telegram to reject the auth attempt with an error.
     script.setAttribute("data-userpic", "true");
     script.setAttribute("data-onauth", "onTelegramAuth(user)");
     script.async = true;
