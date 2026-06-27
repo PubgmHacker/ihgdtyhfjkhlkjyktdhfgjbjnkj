@@ -46,7 +46,7 @@ export interface IdentityProfile {
   username?: string;
   email?: string;
   photoUrl?: string;
-  telegramId?: number;
+  telegramId?: number | bigint;
   passwordHash?: string;
 }
 
@@ -76,12 +76,45 @@ export async function linkOrCreateUser(
     return toPublicUser(user);
   }
 
+  // No identity found — check if a user already exists (e.g. created via old upsertTelegramUser)
+  // so we don't hit UniqueConstraintViolationError on telegramId.
+  const tgId = provider === "telegram" && profile.telegramId !== undefined
+    ? typeof profile.telegramId === "number" ? BigInt(profile.telegramId) : profile.telegramId
+    : null;
+
+  const existingByTelegram = tgId != null
+    ? await db.user.findUnique({ where: { telegramId: tgId } })
+    : null;
+
+  if (existingByTelegram) {
+    // Link existing user to new identity and update profile
+    const updateData: Record<string, any> = { lastLogin: new Date() };
+    if (profile.fullName) updateData.fullName = profile.fullName;
+    if (profile.username) updateData.username = profile.username;
+    if (profile.photoUrl) {
+      const pd = parseProfileData(existingByTelegram.profileData || "{}");
+      pd.photo_url = profile.photoUrl;
+      updateData.profileData = JSON.stringify(pd);
+    }
+    await db.user.update({ where: { id: existingByTelegram.id }, data: updateData });
+    await db.identity.create({
+      data: {
+        userId: existingByTelegram.id,
+        provider,
+        providerUid,
+        passwordHash: provider === "email" ? profile.passwordHash ?? null : null,
+      },
+    });
+    const user = await db.user.findUnique({ where: { id: existingByTelegram.id } });
+    return toPublicUser(user!);
+  }
+
   const profileData: Record<string, any> = {};
   if (profile.photoUrl) profileData.photo_url = profile.photoUrl;
 
   const user = await db.user.create({
     data: {
-      telegramId: provider === "telegram" ? profile.telegramId ?? null : null,
+      telegramId: provider === "telegram" ? tgId ?? null : null,
       email: provider === "email" ? profile.email?.toLowerCase() ?? null : null,
       username: profile.username || "",
       fullName: profile.fullName || "",
@@ -129,13 +162,13 @@ export async function getOrdersForUser(userId: string) {
 }
 
 export async function upsertTelegramUser(data: {
-  id: number;
+  id: number | bigint;
   first_name: string;
   last_name?: string;
   username?: string;
   photo_url?: string;
 }): Promise<PublicUser> {
-  const telegramId = data.id;
+  const telegramId = typeof data.id === "number" ? BigInt(data.id) : data.id;
   const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ").trim();
 
   const existing = await db.user.findUnique({ where: { telegramId } });
