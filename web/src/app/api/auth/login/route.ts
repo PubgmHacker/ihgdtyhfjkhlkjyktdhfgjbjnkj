@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
     const tokenPayload = {
       userId: publicUser.id,
       email: publicUser.email || undefined,
-      telegram_id: publicUser.telegram_id || undefined,      role: user.role,
+      telegram_id: publicUser.telegram_id || undefined,
+      role: user.role,
     };
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
