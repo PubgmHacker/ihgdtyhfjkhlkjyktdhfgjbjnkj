@@ -4,6 +4,25 @@
 *.translation
 .editor/
 
+# Godot project source files (second project — not part of souldawn)
+project.godot
+export_presets.cfg
+icon.svg
+icon.svg.import
+Scenes/
+Scripts/
+Shaders/
+*.csproj
+*.csproj.old
+*.sln
+global.json
+nuget.config
+AudioStreamWav
+MegabonkClone/
+MegabonkUnity/
+Reference/
+Resources/
+
 # ---------- C# / .NET ----------
 # Build results
 [Dd]ebug/
