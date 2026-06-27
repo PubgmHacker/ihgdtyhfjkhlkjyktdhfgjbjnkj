@@ -19,6 +19,6 @@ export async function GET(request: Request) {
     env: { ADMIN_IDS: process.env.ADMIN_IDS || "(NOT SET)", BOT_TOKEN: process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN ? "(SET)" : "(NOT SET)" },
     cookies: { hasAccess },
     jwt: payload ? { userId: payload.userId, role: payload.role, telegram_id: payload.telegram_id } : null,
-    db: dbUser,
+    db: dbUser ? { ...dbUser, telegramId: dbUser.telegramId != null ? Number(dbUser.telegramId) : null } : null,
   });
 }

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const publicUser = {
       id: updatedUser!.id,
-      telegram_id: updatedUser!.telegramId ?? null,
+      telegram_id: updatedUser!.telegramId != null ? Number(updatedUser!.telegramId) : null,
       username: updatedUser!.username || "",
       name: updatedUser!.fullName || "",
       photo_url: profile.photo_url || null,
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     const tokenPayload = {
       userId: user.id,
-      telegram_id: updatedUser!.telegramId || undefined,
+      telegram_id: updatedUser!.telegramId ? Number(updatedUser!.telegramId) : undefined,
       role: updatedUser!.role,
     };
     const accessToken = signAccessToken(tokenPayload);

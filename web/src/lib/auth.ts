@@ -87,7 +87,7 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
       const role = dbUser.role || "user";
       return {
         userId: payload.userId,
-        telegramId: payload.telegram_id ?? dbUser.telegramId ?? undefined,
+        telegramId: payload.telegram_id ?? (dbUser.telegramId != null ? Number(dbUser.telegramId) : undefined),
         role,
         isAdmin: role === "admin" || role === "owner" || !!dbUser.isAdmin,
       };

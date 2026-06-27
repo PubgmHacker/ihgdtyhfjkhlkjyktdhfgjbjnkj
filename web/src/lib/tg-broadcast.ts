@@ -92,7 +92,7 @@ export async function broadcastToTgUsers(
   let failed = 0;
 
   for (const user of users) {
-    const ok = await sendTgMessage(user.telegramId!, text, photoUrl, videoUrl);
+    const ok = await sendTgMessage(Number(user.telegramId!), text, photoUrl, videoUrl);
     if (ok) sent++;
     else failed++;
     // Rate limit: max 30 msg/sec for bots, video needs slower rate

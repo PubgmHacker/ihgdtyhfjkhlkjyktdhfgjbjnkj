@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const publicUser = {
       id: user.id,
       email: user.email || null,
-      telegram_id: user.telegramId || null,
+      telegram_id: user.telegramId != null ? Number(user.telegramId) : null,
       username: user.username || "",
       name: user.fullName || "",
       role: user.role,
@@ -82,8 +82,7 @@ export async function POST(request: NextRequest) {
     const tokenPayload = {
       userId: publicUser.id,
       email: publicUser.email || undefined,
-      telegram_id: publicUser.telegram_id || undefined,
-      role: user.role,
+      telegram_id: publicUser.telegram_id || undefined,      role: user.role,
     };
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);

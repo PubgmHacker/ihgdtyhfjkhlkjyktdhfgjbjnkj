@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const publicUser = {
       id: user.id,
       email: user.email || null,
-      telegram_id: user.telegramId || null,
+      telegram_id: user.telegramId != null ? Number(user.telegramId) : null,
       username: user.username || "",
       name: user.fullName || "",
       role: user.role,

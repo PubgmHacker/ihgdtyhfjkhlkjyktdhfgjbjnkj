@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const auth = await getAuthUser(request);
   if (!auth || !auth.isAdmin) return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
 
-  const sessions = await db.tgSession.findMany({
+  const rawSessions = await db.tgSession.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
     include: {
@@ -15,10 +15,20 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  // Filter out admin/owner sessions
-  const filtered = sessions.filter(
-    (s) => s.user.role !== "admin" && s.user.role !== "owner" && !s.user.isAdmin
-  );
+  // Filter out admin/owner sessions and serialize BigInt
+  const sessions = rawSessions
+    .filter(
+      (s) => s.user.role !== "admin" && s.user.role !== "owner" && !s.user.isAdmin
+    )
+    .map((s) => ({
+      ...s,
+      user: {
+        ...s.user,
+        telegramId: s.user.telegramId != null ? Number(s.user.telegramId) : null,
+      },
+      createdAt: s.createdAt ? new Date(s.createdAt).toISOString() : null,
+      authDate: s.authDate != null ? Number(s.authDate) : null,
+    }));
 
-  return NextResponse.json({ sessions: filtered });
+  return NextResponse.json({ sessions });
 }

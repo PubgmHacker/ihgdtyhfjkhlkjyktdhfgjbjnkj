@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest) {
   const profile = (user.profileData as any) ? JSON.parse(user.profileData) : {};
   return NextResponse.json({
     id: user.id,
-    telegram_id: user.telegramId,
+    telegram_id: user.telegramId != null ? Number(user.telegramId) : null,
     username: user.username,
     name: user.fullName,
     photo_url: profile.photo_url || null,

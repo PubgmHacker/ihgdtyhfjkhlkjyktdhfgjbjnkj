@@ -24,7 +24,7 @@ function toPublicUser(u: any): PublicUser {
   const profile = parseProfileData(u.profileData);
   return {
     id: u.id,
-    telegram_id: u.telegramId ?? null,
+    telegram_id: u.telegramId != null ? Number(u.telegramId) : null,
     username: u.username || "",
     name: u.fullName || "",
     photo_url: profile.photo_url || null,

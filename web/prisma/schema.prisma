@@ -10,7 +10,7 @@ datasource db {
 model User {
   @@map("app_users")
   id              String    @id @default(cuid())
-  telegramId      Int?      @unique
+  telegramId      BigInt?   @unique
   email           String?   @unique
   username        String    @default("")
   fullName        String    @default("")

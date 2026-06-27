@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const auth = await getAuthUser(request);
   if (!auth || !auth.isAdmin) return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
 
-  const users = await db.user.findMany({
+  const rawUsers = await db.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
     include: {
@@ -15,6 +15,13 @@ export async function GET(request: NextRequest) {
       _count: { select: { orders: true, tgSessions: true } },
     },
   });
+
+  const users = rawUsers.map((u) => ({
+    ...u,
+    telegramId: u.telegramId != null ? Number(u.telegramId) : null,
+    createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
+    lastLogin: u.lastLogin ? new Date(u.lastLogin).toISOString() : null,
+  }));
 
   return NextResponse.json({ users });
 }
