@@ -6,7 +6,9 @@ import os
 
 # ======================== ENV VARS ========================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-SUPPORT_CHAT_ID = int(os.getenv("SUPPORT_CHAT_ID", "520904288"))
+# SUPPORT_CHAT_ID — takes the first numeric ID if multiple are comma-separated
+_raw_support = os.getenv("SUPPORT_CHAT_ID", "520904288").split(",")[0].strip()
+SUPPORT_CHAT_ID = int(_raw_support) if _raw_support.isdigit() else 0
 
 # ======================== TELEGRAM LOGIN WIDGET ========================
 # Токен того же бота, что и BOT_TOKEN (Login Widget и Mini App используют одного бота).
