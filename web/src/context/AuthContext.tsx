@@ -154,7 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.success && data.user) {
           setUser(data.user);
           if (data.token) setToken(data.token);
-          router.push("/dashboard");
+          // Redirect admins to admin panel, others to dashboard
+          if (data.user.is_admin || data.user.role === "admin" || data.user.role === "owner") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
         }
       } catch (e) {
         console.error("Auth failed:", e);
@@ -183,7 +188,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.success && data.user) {
           setUser(data.user);
           if (data.token) setToken(data.token);
-          router.push("/dashboard");
+          // Redirect admins to admin panel, others to dashboard
+          if (data.user.is_admin || data.user.role === "admin" || data.user.role === "owner") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
         }
       } catch (e) {
         console.error("Mini App auth failed:", e);
@@ -205,7 +215,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) return { error: data.error || "Ошибка входа" };
         setUser(data.user);
         if (data.token) setToken(data.token);
-        router.push("/dashboard");
+        // Redirect admins to admin panel
+        if (data.user.is_admin || data.user.role === "admin" || data.user.role === "owner") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
         return {};
       } catch {
         return { error: "Ошибка сети" };
@@ -227,7 +242,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) return { error: data.error || "Ошибка регистрации" };
         setUser(data.user);
         if (data.token) setToken(data.token);
-        router.push("/dashboard");
+        if (data.user.is_admin || data.user.role === "admin" || data.user.role === "owner") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
         return {};
       } catch {
         return { error: "Ошибка сети" };

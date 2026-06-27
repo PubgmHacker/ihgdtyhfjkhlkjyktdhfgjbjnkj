@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import TelegramLogin from "@/components/TelegramLogin";
 
 interface TgSession {
   id: string;
@@ -128,8 +129,9 @@ export default function AdminPage() {
   // Broadcasts history
   const [broadcasts, setBroadcasts] = useState<BroadcastRow[]>([]);
 
+  // If authenticated and is admin, stay on page. If authenticated but not admin, go to dashboard.
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (!loading && user && !isAdmin) {
       router.replace("/dashboard");
     }
   }, [loading, user, isAdmin, router]);
@@ -266,10 +268,32 @@ export default function AdminPage() {
     setBcSending(false);
   };
 
-  if (loading || !user || !isAdmin) {
+  // Show login form for unauthenticated users
+  if (loading) {
     return (
       <div className="pt-24 pb-20 min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-[rgba(200,200,210,0.2)] border-t-[#C8C8D0] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="pt-24 pb-20 min-h-screen flex flex-col items-center justify-center px-6">
+        <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#C8C8D0] mb-3">Панель управления</p>
+        <h1 className="font-[family-name:var(--font-oswald)] text-3xl md:text-5xl font-black tracking-tight uppercase text-[#E8E8F0] mb-8">
+          Админ
+        </h1>
+        <p className="text-sm text-[#6B6B78] mb-8 text-center max-w-sm">
+          Войдите через Telegram, чтобы получить доступ к панели администратора.
+        </p>
+        <TelegramLogin className="mb-6" />
+        <button
+          onClick={() => router.push("/")}
+          className="mt-4 text-xs font-bold tracking-widest uppercase px-8 py-3 border border-[rgba(200,200,210,0.14)] text-[#6B6B78] hover:border-[rgba(200,200,210,0.3)] hover:text-[#C8C8D0] transition-colors duration-300"
+        >
+          На главную
+        </button>
       </div>
     );
   }
