@@ -4,10 +4,10 @@ Telegram-бот техподдержки для streetwear-бренда SOULDAWN
 
 ## ⚡ Возможности
 
-- 🛍 **Мини-аппа каталог** — открывается прямо в Telegram
+- 🛍 **Каталог (Next.js)** — открывается прямо в Telegram как WebApp
 - 📋 **FAQ** — 6 категорий: доставка, возврат, размеры, оплата, качество, контакты
 - 💬 **Пересылка оператору** — пользователь пишет вопрос → он уходит оператору
-- 📦 **Заказы** — оформление заказов через мини-аппу
+- 📦 **Заказы** — оформление заказов через сайт
 - 🎛 **Inline-кнопки** — удобная навигация без ввода команд
 - 📱 **Меню команд** — встроено в Telegram
 
@@ -31,8 +31,8 @@ Telegram-бот техподдержки для streetwear-бренда SOULDAWN
 
 ```bash
 export BOT_TOKEN="ТВОЙ_ТОКЕН"
+export SITE_URL="https://your-railway-url.up.railway.app"
 export SUPPORT_CHAT_ID="123456789"          # ID оператора
-export MINIAPP_URL="https://pubgmhacker.github.io/souldawn-support-bot/miniapp/"
 export OPENAI_API_KEY=""                     # Опционально — для AI-ассистента
 export DATABASE_URL=""                       # Опционально — PostgreSQL
 export YOOKASSA_SHOP_ID=""                   # Опционально — для оплаты
@@ -59,12 +59,12 @@ python bot.py
 
 ```
 souldawn-support-bot/
-├── bot.py              # Основной код бота (aiogram 3.x + aiohttp API)
-├── miniapp/
-│   └── index.html      # Мини-аппа каталог (Telegram WebApp)
+├── bot.py              # Основной код бота (aiogram 3.x)
+├── config.py           # Конфигурация (env vars + каталог)
+├── keyboards.py        # Inline-клавиатуры
+├── handlers/           # Обработчики команд и коллбэков
+├── database/           # SQLAlchemy модели + подключение
 ├── requirements.txt    # Python зависимости
-├── .github/            # GitHub Actions / Pages
-├── index.html          # Лендинг для GitHub Pages
 └── README.md           # Документация
 ```
 
@@ -88,10 +88,10 @@ FAQ = {
 1. Добавь ключ в словарь `FAQ`
 2. Добавь кнопку в `main_kb()`
 
-### Деплой мини-аппы
+### Деплой сайта
 
-1. Положи `miniapp/index.html` в GitHub Pages
-2. Вставь URL в `MINIAPP_URL` в `bot.py`
+Каталог и FAQ живут на Next.js сайте (`web/`), деплоятся на Railway.
+Бот открывает `SITE_URL` как Telegram WebApp.
 
 ## 📋 Команды
 

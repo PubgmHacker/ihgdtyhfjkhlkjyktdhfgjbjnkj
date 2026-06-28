@@ -137,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const tg = (window as any)?.Telegram?.WebApp;
           if (tg?.initData) {
+            tg.ready();
+            tg.expand();
             const res = await fetch("/api/auth/mini-app", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -149,6 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (data.token) setToken(data.token);
                 const verified = await loadMe(data.token);
                 if (!verified) setUser(data.user);
+                // Redirect to admin if ?view=admin in URL
+                const u = new URL(window.location.href);
+                const view = u.searchParams.get("view");
+                if (view === "admin" && (data.user.is_admin || data.user.role === "admin" || data.user.role === "owner")) {
+                  u.searchParams.delete("view");
+                  window.history.replaceState({}, "", u.pathname + u.search);
+                  router.push("/admin");
+                  return;
+                }
                 return;
               }
             } else {

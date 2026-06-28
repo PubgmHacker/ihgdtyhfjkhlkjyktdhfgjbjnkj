@@ -14,7 +14,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramRetryAfter, TelegramForbiddenError
 
-from config import ADMIN_IDS, MINIAPP_URL
+from config import ADMIN_IDS
 from database import (
     get_all_users, get_ticket, get_ticket_by_message_id, get_ticket_by_accepted_admin,
     take_ticket as db_take_ticket,
